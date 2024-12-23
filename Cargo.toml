@@ -8,11 +8,11 @@ authors = ["smh000809 <smh000809@outlook.com>"]
 actix-files = "0.6.6"
 actix-multipart = "0.7.2"
 actix-web = { version = "4.9.0", features = ["rustls-0_23"] }
-env_logger = "0.11.5"
+env_logger = "0.11.6"
 futures = "0.3.31"
 log = "0.4.22"
 serde = { version = "1.0.216", features = ["derive"] }
-serde_json = "1.0.133"
+serde_json = "1.0.134"
 derive_more = { version = "1.0.0", features = ["full"] }
 actix-cors = "0.7.0"
 chrono = { version = "0.4.39", features = ["serde"] }
@@ -30,7 +30,7 @@ sqlx = { version = "0.8.2", features = [
     "uuid",
 ] }
 validator = "0.19.0"
-anyhow = "1.0.94"
+anyhow = "1.0.95"
 toml = "0.8.19"
 rustls-pemfile = "2.2.0"
 rustls = "0.23.20"
