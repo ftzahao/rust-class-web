@@ -2,3 +2,4 @@
 /.idea
 .idea
 /.sqlx/**/*
+.DS_Store
