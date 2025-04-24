@@ -1,36 +1,36 @@
 [package]
 name = "rust-class-web"
 version = "0.1.2"
-edition = "2021"
-authors = ["smh000809 <smh000809@outlook.com>"]
+edition = "2024"
+authors = ["ftzahao <ftzahao@outlook.com>"]
 
 [dependencies]
 actix-files = "0.6.6"
 actix-multipart = "0.7.2"
-actix-web = { version = "4.9.0", features = ["rustls-0_23"] }
-env_logger = "0.11.6"
+actix-web = { version = "4.10.2", features = ["rustls-0_23"] }
+env_logger = "0.11.8"
 futures = "0.3.31"
-log = "0.4.22"
-serde = { version = "1.0.216", features = ["derive"] }
-serde_json = "1.0.134"
-derive_more = { version = "1.0.0", features = ["full"] }
-actix-cors = "0.7.0"
-chrono = { version = "0.4.39", features = ["serde"] }
-uuid = { version = "1.11.0", features = [
+log = "0.4.27"
+serde = { version = "1.0.219", features = ["derive"] }
+serde_json = "1.0.140"
+derive_more = { version = "2.0.1", features = ["full"] }
+actix-cors = "0.7.1"
+chrono = { version = "0.4.40", features = ["serde"] }
+uuid = { version = "1.16.0", features = [
     "fast-rng",
     "macro-diagnostics",
     "serde",
     "v4",
 ] }
-sqlx = { version = "0.8.2", features = [
+sqlx = { version = "0.8.5", features = [
     "chrono",
     "mysql",
     "runtime-async-std-native-tls",
     "sqlite",
     "uuid",
 ] }
-validator = "0.19.0"
-anyhow = "1.0.95"
-toml = "0.8.19"
+validator = "0.20.0"
+anyhow = "1.0.98"
+toml = "0.8.20"
 rustls-pemfile = "2.2.0"
-rustls = "0.23.20"
+rustls = "0.23.26"
