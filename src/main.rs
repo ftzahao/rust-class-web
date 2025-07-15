@@ -1,48 +1,46 @@
-#[macro_use]
-extern crate serde;
+use rust_class_web::*;
 
-mod db;
-mod env;
-mod load_rustls_config;
-mod log;
-mod middleware;
-mod models;
-mod routes;
-mod utils;
-use actix_web::{middleware::Logger, web::Data, App, HttpServer};
-
-#[derive(Debug, Clone)]
-pub struct AppState {
-    pub pool: sqlx::SqlitePool,
-}
+use actix_cors::Cors;
+use actix_web::{
+    App, HttpServer,
+    http::header::{ACCEPT, AUTHORIZATION, CONTENT_TYPE},
+    middleware::{Compress, Logger},
+    web::Data,
+};
+use config::Config;
+use state::AppState;
+use tls_config::tls_config;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    env::load_dotenv().expect("main::env::load_dotenv()");
-    env_logger::init();
-    log::load_log().expect("main::log::load_log()");
-    let pool = db::init_db().await;
+    env_logger::init_from_env(env_logger::Env::new().default_filter_or("debug"));
+    let config = Config::new();
+
+    println!("配置: {:?}", config);
+
+    let pool = db::init_db(&config).await;
     println!("服务器成功启动!");
-    let service_port = std::env::var("SERVICE_PORT")
-        .unwrap_or("8001".to_string())
-        .parse::<u16>()
-        .unwrap_or(8001);
-    let enable_tls = std::env::var("ENABLE_TLS").unwrap_or("1".to_string());
 
     let http_server = HttpServer::new(move || {
-        let cors = middleware::cors();
         App::new()
-            .app_data(Data::new(AppState { pool: pool.clone() }))
-            .configure(routes::config)
-            .wrap(cors)
+            .wrap(
+                Cors::default()
+                    .allow_any_origin()
+                    .allowed_methods(vec!["GET", "POST"])
+                    .allowed_headers(vec![CONTENT_TYPE, AUTHORIZATION, ACCEPT])
+                    .supports_credentials(),
+            )
+            .wrap(Compress::default())
             .wrap(Logger::default())
+            .app_data(Data::new(AppState { pool: pool.clone() }))
+            .configure(handlers::config)
     });
-    let server_bind = match enable_tls.as_str() {
-        "1" => http_server.bind_rustls_0_23(
-            ("127.0.0.1", service_port),
-            load_rustls_config::load_rustls_config(),
-        ),
-        _ => http_server.bind(("127.0.0.1", service_port)),
+    let server_bind = match config.tls.enabled.as_str() {
+        "rustls-0_23" => {
+            print!("Using Rustls 0.23 for TLS");
+            http_server.bind_rustls_0_23(("127.0.0.1", config.server.port), tls_config(&config))
+        }
+        _ => http_server.bind(("127.0.0.1", config.server.port)),
     };
     server_bind?.run().await
 }

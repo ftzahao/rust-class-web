@@ -1,10 +1,9 @@
-use crate::AppState;
+use crate::state::AppState;
 use actix_web::{
-    delete, post,
+    Responder, Result, delete, post,
     web::{Data, Json, Path},
-    Responder, Result,
 };
-use sqlx::{query, query_as, FromRow};
+use sqlx::{FromRow, query, query_as};
 
 #[derive(Deserialize, Serialize, Debug, FromRow)]
 struct Info {

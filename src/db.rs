@@ -1,27 +1,20 @@
+use crate::config::Config;
 use sqlx::{
     query,
     sqlite::{SqlitePool, SqlitePoolOptions},
 };
-use std::fs;
-use std::path::Path;
+use std::{
+    fs::{File, create_dir_all},
+    path::Path,
+};
 
-pub async fn init_db() -> SqlitePool {
-    let database_url = std::env::var("DATABASE_URL").unwrap_or("./data/db.sqlite".to_string());
-    let max_connections = std::env::var("MAX_CONNECTIONS")
-        .unwrap_or("100".to_string())
-        .parse::<u32>()
-        .unwrap_or(100);
-    let min_connections = std::env::var("MIN_CONNECTIONS")
-        .unwrap_or("3".to_string())
-        .parse::<u32>()
-        .unwrap_or(3);
-
-    create_db_file(&database_url);
+pub async fn init_db(config: &Config) -> SqlitePool {
+    create_db_file(&config.database.path);
 
     let sqlite = match SqlitePoolOptions::new()
-        .max_connections(max_connections)
-        .min_connections(min_connections)
-        .connect(&format!("sqlite://{}", &database_url))
+        .max_connections(config.database.max_connections)
+        .min_connections(config.database.min_connections)
+        .connect(&format!("sqlite://{}", &config.database.path))
         .await
     {
         Ok(pool) => {
@@ -41,8 +34,8 @@ pub async fn init_db() -> SqlitePool {
 fn create_db_file(database_url: &str) {
     if !Path::new(database_url).exists() {
         // 考虑到某个路径下没有目录的行为，先创建目录，在创建文件
-        fs::create_dir_all(Path::new(database_url).parent().unwrap()).unwrap();
-        fs::File::create(database_url).unwrap();
+        create_dir_all(Path::new(database_url).parent().unwrap()).unwrap();
+        File::create(database_url).unwrap();
     }
 }
 

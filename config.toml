@@ -1,0 +1,14 @@
+[server]
+host = "127.0.0.1"
+port = 8001
+
+[database]
+db_type = "sqlite"
+path = "./data/db.sqlite"
+max_connections = 100
+min_connections = 3
+
+[tls]
+enabled = "default"
+cert_path = "./cert.pem"
+key_path = "./key.pem"
