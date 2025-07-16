@@ -7,7 +7,7 @@ pub struct Server {
 impl Default for Server {
     fn default() -> Self {
         Server {
-            host: "127.0.0.1".parse().unwrap(),
+            host: "0.0.0.0".parse().unwrap(),
             port: 8081,
         }
     }
