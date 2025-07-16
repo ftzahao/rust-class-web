@@ -9,7 +9,6 @@ use actix_web::{
 };
 use config::Config;
 use state::AppState;
-use tls_config::tls_config;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -38,7 +37,7 @@ async fn main() -> std::io::Result<()> {
             print!("Using Rustls 0.23 for TLS");
             http_server.bind_rustls_0_23(
                 (config.server.host, config.server.port),
-                tls_config(&config),
+                Config::tls_config(&config),
             )
         }
         _ => http_server.bind((config.server.host, config.server.port)),
