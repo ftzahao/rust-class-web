@@ -8,7 +8,7 @@ impl Default for Server {
     fn default() -> Self {
         Server {
             host: "0.0.0.0".parse().unwrap(),
-            port: 8081,
+            port: 8001,
         }
     }
 }
