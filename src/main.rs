@@ -37,7 +37,14 @@ async fn main() -> std::io::Result<()> {
             print!("Using Rustls 0.23 for TLS");
             http_server.bind_rustls_0_23(
                 (config.server.host, config.server.port),
-                Config::tls_config(&config),
+                Config::rustls_config(&config),
+            )
+        }
+        "openssl" => {
+            print!("Using OpenSSL for TLS");
+            http_server.bind_openssl(
+                (config.server.host, config.server.port),
+                Config::openssl_builder(&config),
             )
         }
         _ => http_server.bind((config.server.host, config.server.port)),

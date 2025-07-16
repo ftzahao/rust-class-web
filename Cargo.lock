@@ -208,9 +208,11 @@ dependencies = [
  "actix-utils",
  "futures-core",
  "impl-more",
+ "openssl",
  "pin-project-lite",
  "rustls-pki-types",
  "tokio",
+ "tokio-openssl",
  "tokio-rustls",
  "tokio-util",
  "tracing",
@@ -483,7 +485,7 @@ dependencies = [
  "futures-lite 2.6.0",
  "parking",
  "polling 3.8.0",
- "rustix 1.0.7",
+ "rustix 1.0.8",
  "slab",
  "tracing",
  "windows-sys 0.59.0",
@@ -2257,7 +2259,7 @@ dependencies = [
  "concurrent-queue",
  "hermit-abi 0.5.2",
  "pin-project-lite",
- "rustix 1.0.7",
+ "rustix 1.0.8",
  "tracing",
  "windows-sys 0.59.0",
 ]
@@ -2488,6 +2490,7 @@ dependencies = [
  "figment",
  "futures",
  "log",
+ "openssl",
  "rustls",
  "rustls-pemfile",
  "serde",
@@ -2548,15 +2551,15 @@ dependencies = [
 
 [[package]]
 name = "rustix"
-version = "1.0.7"
+version = "1.0.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c71e83d6afe7ff64890ec6b71d6a69bb8a610ab78ce364b3352876bb4c801266"
+checksum = "11181fbabf243db407ef8df94a6ce0b2f9a733bd8be4ad02b4eda9602296cac8"
 dependencies = [
  "bitflags 2.9.1",
  "errno",
  "libc",
  "linux-raw-sys 0.9.4",
- "windows-sys 0.59.0",
+ "windows-sys 0.60.2",
 ]
 
 [[package]]
@@ -3093,7 +3096,7 @@ dependencies = [
  "fastrand 2.3.0",
  "getrandom 0.3.3",
  "once_cell",
- "rustix 1.0.7",
+ "rustix 1.0.8",
  "windows-sys 0.59.0",
 ]
 
@@ -3190,6 +3193,17 @@ dependencies = [
  "slab",
  "socket2 0.5.10",
  "windows-sys 0.52.0",
+]
+
+[[package]]
+name = "tokio-openssl"
+version = "0.6.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "59df6849caa43bb7567f9a36f863c447d95a11d5903c9cc334ba32576a27eadd"
+dependencies = [
+ "openssl",
+ "openssl-sys",
+ "tokio",
 ]
 
 [[package]]

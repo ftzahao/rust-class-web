@@ -8,7 +8,7 @@ path = "./data/db.sqlite"
 max_connections = 100
 min_connections = 3
 
-[tls]
-enabled = "default"
-cert_path = "./cert.pem"
-key_path = "./key.pem"
+# [tls]
+# enabled = "default"
+# cert_path = "./cert.pem"
+# key_path = "./key.pem"
