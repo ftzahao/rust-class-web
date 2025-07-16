@@ -1,7 +1,7 @@
 [tasks.dev]
-install_crate = "cargo-watch"
-command = "cargo"
-args = ["watch", "-x", "run"]
+install_crate = "watchexec-cli"
+command = "watchexec"
+args = ["-w", "src", "-r", "cargo", "run"]
 
 [tasks.fmt]
 install_crate = "rustfmt"
