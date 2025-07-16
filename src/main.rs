@@ -16,8 +16,6 @@ async fn main() -> std::io::Result<()> {
     env_logger::init_from_env(env_logger::Env::new().default_filter_or("debug"));
     let config = Config::new();
 
-    println!("配置: {:?}", config);
-
     let pool = db::init_db(&config).await;
     println!("服务器成功启动!");
 
@@ -38,9 +36,12 @@ async fn main() -> std::io::Result<()> {
     let server_bind = match config.tls.enabled.as_str() {
         "rustls-0_23" => {
             print!("Using Rustls 0.23 for TLS");
-            http_server.bind_rustls_0_23(("127.0.0.1", config.server.port), tls_config(&config))
+            http_server.bind_rustls_0_23(
+                (config.server.host, config.server.port),
+                tls_config(&config),
+            )
         }
-        _ => http_server.bind(("127.0.0.1", config.server.port)),
+        _ => http_server.bind((config.server.host, config.server.port)),
     };
     server_bind?.run().await
 }

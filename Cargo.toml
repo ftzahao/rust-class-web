@@ -1,6 +1,6 @@
 [package]
 name = "rust-class-web"
-version = "0.2.0"
+version = "0.2.1"
 edition = "2024"
 authors = ["ftzahao <ftzahao@outlook.com>"]
 
@@ -35,3 +35,4 @@ toml = "0.9.2"
 rustls-pemfile = "2.2.0"
 rustls = "0.23.29"
 bigdecimal = "0.4.8"
+figment = { version = "0.10.19", features = ["toml"] }
