@@ -26,7 +26,7 @@ pub struct Config {
 
 impl Config {
     pub fn new() -> Self {
-        info!("加载配置");
+        debug!("加载配置");
         let config: Config = Figment::new()
             // 先加载结构体默认值
             .merge(Serialized::defaults(Config::default()))
@@ -34,7 +34,7 @@ impl Config {
             .merge(Toml::file("config.toml"))
             .extract()
             .expect("配置加载失败");
-        println!("{:#?}", config);
+        debug!("{:#?}", config);
         config
     }
     pub fn openssl_builder(&self) -> SslAcceptorBuilder {
@@ -51,6 +51,12 @@ impl Config {
         builder
     }
     pub fn rustls_config(&self) -> ServerConfig {
+        // to create a self-signed temporary cert for testing:
+        // `mkcert -key-file key.pem -cert-file cert.pem 127.0.0.1 localhost`
+        // to install mkcert CA in the system trust store, run:
+        // `mkcert -install`
+        // to uninstall mkcert CA from the system trust store, run:
+        // `mkcert -uninstall`
         rustls::crypto::aws_lc_rs::default_provider()
             .install_default()
             .unwrap();

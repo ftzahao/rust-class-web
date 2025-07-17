@@ -6,5 +6,6 @@ extern crate tracing;
 pub mod config;
 pub mod db;
 pub mod handlers;
+pub mod log;
 pub mod models;
 pub mod state;

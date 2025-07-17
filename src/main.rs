@@ -14,34 +14,12 @@ use config::Config;
 use state::AppState;
 
 use tracing_actix_web::TracingLogger;
-use tracing_appender::rolling::{RollingFileAppender, Rotation};
-use tracing_bunyan_formatter::{BunyanFormattingLayer, JsonStorageLayer};
-use tracing_log::LogTracer;
-use tracing_subscriber::{EnvFilter, Registry, layer::SubscriberExt};
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    info!("Starting server...");
-    LogTracer::init().expect("Unable to setup log tracer!");
-
-    let app_name = concat!(
-        "[",
-        env!("CARGO_PKG_NAME"),
-        "].[",
-        env!("CARGO_PKG_VERSION"),
-        "].log"
-    )
-    .to_string();
-    let rolling_file_appender =
-        RollingFileAppender::new(Rotation::HOURLY, "./data/logs", app_name.clone());
-
-    let (non_blocking_writer, _guard) = tracing_appender::non_blocking(rolling_file_appender);
-    let bunyan_formatting_layer = BunyanFormattingLayer::new(app_name, non_blocking_writer);
-    let subscriber = Registry::default()
-        .with(EnvFilter::new(tracing::Level::DEBUG.to_string()))
-        .with(JsonStorageLayer)
-        .with(bunyan_formatting_layer);
-    tracing::subscriber::set_global_default(subscriber).unwrap();
+    println!("服务启动中...");
+    let _guard = log::tracing_init();
+    debug!("日志记录器已初始化");
 
     let config = Config::new();
 
@@ -61,34 +39,20 @@ async fn main() -> std::io::Result<()> {
             .app_data(Data::new(AppState { pool: pool.clone() }))
             .configure(handlers::config)
     });
+    let server_host = config.server.host;
+    let server_port = config.server.port;
     let server_bind = match config.tls.enabled.as_str() {
         "rustls-0_23" => {
-            info!(
-                "使用TLS(Rustls 0.23)协议启动服务，监听地址: https://{}:{}",
-                config.server.host, config.server.port
-            );
-            http_server.bind_rustls_0_23(
-                (config.server.host, config.server.port),
-                Config::rustls_config(&config),
-            )
+            debug!("使用TLS(Rustls)协议启动服务，监听地址: https://{server_host}:{server_port}");
+            http_server.bind_rustls_0_23((server_host, server_port), Config::rustls_config(&config))
         }
         "openssl" => {
-            tracing::info!(
-                "使用TLS(OpenSSL)协议启动服务，监听地址: https://{}:{}",
-                config.server.host,
-                config.server.port
-            );
-            http_server.bind_openssl(
-                (config.server.host, config.server.port),
-                Config::openssl_builder(&config),
-            )
+            debug!("使用TLS(OpenSSL)协议启动服务，监听地址: https://{server_host}:{server_port}");
+            http_server.bind_openssl((server_host, server_port), Config::openssl_builder(&config))
         }
         _ => {
-            info!(
-                "使用 HTTP 协议启动服务，监听地址: http://{}:{}",
-                config.server.host, config.server.port
-            );
-            http_server.bind((config.server.host, config.server.port))
+            debug!("使用 HTTP 协议启动服务，监听地址: http://{server_host}:{server_port}");
+            http_server.bind((server_host, server_port))
         }
     };
     server_bind?.run().await
