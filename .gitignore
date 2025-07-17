@@ -3,3 +3,4 @@
 .idea
 /.sqlx/**/*
 .DS_Store
+*.log.*
