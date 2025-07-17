@@ -1,6 +1,6 @@
 #[derive(Debug, Clone)]
 pub struct AppState {
-    pub pool: sqlx::SqlitePool,
+    pub db: sea_orm::DatabaseConnection,
 }
 
 /// `Cargo.toml` 中的 package.name

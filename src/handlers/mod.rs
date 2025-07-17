@@ -6,7 +6,7 @@ pub fn config(cfg: &mut ServiceConfig) {
     cfg.service(index::index).service(
         scope("/api")
             .service(users::get_query_users)
-            .service(users::create_user)
-            .service(users::delete_user),
+            .service(users::delete_user)
+            .service(users::create_user),
     );
 }

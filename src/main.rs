@@ -15,6 +15,8 @@ use state::{AppState, CARGO_PKG_VERSION};
 
 use tracing_actix_web::TracingLogger;
 
+mod entity;
+
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     println!("服务启动中...");
@@ -23,7 +25,7 @@ async fn main() -> std::io::Result<()> {
 
     let config = Config::new();
 
-    let pool = db::init_db(&config).await;
+    let db = Config::init_db(&config).await;
 
     let http_server = HttpServer::new(move || {
         App::new()
@@ -37,7 +39,7 @@ async fn main() -> std::io::Result<()> {
             )
             .wrap(Compress::default())
             .wrap(DefaultHeaders::new().add(("X-Version", CARGO_PKG_VERSION)))
-            .app_data(Data::new(AppState { pool: pool.clone() }))
+            .app_data(Data::new(AppState { db: db.clone() }))
             .configure(handlers::config)
     });
     let server_host = config.server.host;

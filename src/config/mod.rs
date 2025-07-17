@@ -1,8 +1,8 @@
-mod database;
+mod db;
 mod server;
 mod tls;
 
-use database::Database;
+use db::Db;
 use server::Server;
 use tls::Tls;
 
@@ -16,15 +16,18 @@ use rustls::{
     pki_types::{CertificateDer, PrivateKeyDer, pem::PemObject},
 };
 
+use sea_orm::{ConnectOptions, ConnectionTrait, Database, DatabaseConnection};
+
 #[derive(Serialize, Deserialize, Clone, Default, Debug)]
 #[serde(default)]
 pub struct Config {
     pub server: Server,
-    pub database: Database,
+    pub db: Db,
     pub tls: Tls,
 }
 
 impl Config {
+    /// 创建一个新的配置实例
     pub fn new() -> Self {
         debug!("加载配置");
         let config: Config = Figment::new()
@@ -37,6 +40,10 @@ impl Config {
         debug!("{:#?}", config);
         config
     }
+}
+
+impl Config {
+    /// 获取 OpenSSL 的 SslAcceptorBuilder
     pub fn openssl_builder(&self) -> SslAcceptorBuilder {
         // load TLS keys
         // to create a self-signed temporary cert for testing:
@@ -50,6 +57,7 @@ impl Config {
             .unwrap();
         builder
     }
+    /// 获取 Rustls 的 ServerConfig
     pub fn rustls_config(&self) -> ServerConfig {
         // to create a self-signed temporary cert for testing:
         // `mkcert -key-file key.pem -cert-file cert.pem 127.0.0.1 localhost`
@@ -76,4 +84,38 @@ impl Config {
             .with_single_cert(cert_chain, key_der)
             .unwrap()
     }
+}
+
+impl Config {
+    /// 获取数据库连接 URL
+    pub fn database_url(&self) -> String {
+        format!("{}://{}?mode=rwc", self.db.db_type, self.db.path)
+    }
+    /// 初始化数据库连接池
+    pub async fn init_db(config: &Config) -> DatabaseConnection {
+        let url = config.database_url();
+        println!("正在连接数据库: {url}");
+
+        let mut opt = ConnectOptions::new(url);
+        opt.max_connections(config.db.max_connections)
+            .min_connections(config.db.min_connections)
+            .sqlx_logging(true);
+        let db = Database::connect(opt).await.unwrap();
+        create_db_table(db.clone()).await; // 确保数据库表存在
+        println!("数据库连接成功");
+        db
+    }
+}
+
+/// 检查数据库的完整性，不完整的部分给予补充
+async fn create_db_table(pool: DatabaseConnection) {
+    pool.execute_unprepared("CREATE TABLE IF NOT EXISTS users(
+        id          INTEGER primary key AUTOINCREMENT not null,
+        name        text                              not null,
+        email       char(20) UNIQUE                   not null,
+        pass_word   char(65)                          not null,                                        -- 'passwd hash'
+        create_time datetime                          not null default (datetime('now', 'localtime')), -- 'create datetime'
+        update_time datetime                          not null default (datetime('now', 'localtime')), -- 'update datetime'
+        status      char(10)                          not null default 'normal'                        -- comment 'status: normal, blocked, deleted'
+    )").await.unwrap();
 }
