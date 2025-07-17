@@ -44,11 +44,11 @@ async fn main() -> std::io::Result<()> {
     let server_port = config.server.port;
     let server_bind = match config.tls.enabled.as_str() {
         "rustls-0_23" => {
-            debug!("使用TLS(Rustls)协议启动服务，监听地址: https://{server_host}:{server_port}");
+            debug!("使用SSL(Rustls)协议启动服务，监听地址: https://{server_host}:{server_port}");
             http_server.bind_rustls_0_23((server_host, server_port), Config::rustls_config(&config))
         }
         "openssl" => {
-            debug!("使用TLS(OpenSSL)协议启动服务，监听地址: https://{server_host}:{server_port}");
+            debug!("使用SSL(OpenSSL)协议启动服务，监听地址: https://{server_host}:{server_port}");
             http_server.bind_openssl((server_host, server_port), Config::openssl_builder(&config))
         }
         _ => {
