@@ -7,11 +7,11 @@ use actix_cors::Cors;
 use actix_web::{
     App, HttpServer,
     http::header::{ACCEPT, AUTHORIZATION, CONTENT_TYPE},
-    middleware::{Compat, Compress},
+    middleware::{Compat, Compress, DefaultHeaders},
     web::Data,
 };
 use config::Config;
-use state::AppState;
+use state::{AppState, CARGO_PKG_VERSION};
 
 use tracing_actix_web::TracingLogger;
 
@@ -36,6 +36,7 @@ async fn main() -> std::io::Result<()> {
                     .supports_credentials(),
             )
             .wrap(Compress::default())
+            .wrap(DefaultHeaders::new().add(("X-Version", CARGO_PKG_VERSION)))
             .app_data(Data::new(AppState { pool: pool.clone() }))
             .configure(handlers::config)
     });
