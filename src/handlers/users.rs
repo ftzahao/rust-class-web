@@ -54,15 +54,15 @@ struct CreateUser {
 }
 #[post("/users/create")]
 pub async fn create_user(
-    info: Json<CreateUser>,
+    params: Json<CreateUser>,
     app_data: Data<AppState>,
 ) -> Result<impl Responder> {
-    println!("{:#?}", info);
+    println!("{:#?}", params);
     let flag =
         query("INSERT INTO users (name, email, pass_word, status) VALUES (?, ?, ?, 'normal')")
-            .bind(info.name.to_string())
-            .bind(info.email.to_string())
-            .bind(info.pass_word.to_string())
+            .bind(params.name.to_string())
+            .bind(params.email.to_string())
+            .bind(params.pass_word.to_string())
             .execute(&app_data.pool)
             .await
             .unwrap();

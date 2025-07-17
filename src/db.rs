@@ -41,7 +41,6 @@ fn create_db_file(database_url: &str) {
 
 /// 检查数据库的完整性，不完整的部分给予补充
 async fn create_db_table(pool: SqlitePool) {
-    println!("{:#?}", pool);
     // 检查数据库是否有表 `users`，没有则创建
     query("CREATE TABLE IF NOT EXISTS users(
         id          INTEGER primary key AUTOINCREMENT not null,

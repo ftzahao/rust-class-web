@@ -26,7 +26,7 @@ pub struct Config {
 
 impl Config {
     pub fn new() -> Self {
-        dbg!("加载配置");
+        info!("加载配置");
         let config: Config = Figment::new()
             // 先加载结构体默认值
             .merge(Serialized::defaults(Config::default()))
