@@ -11,15 +11,16 @@ use actix_web::{
     web::Data,
 };
 use config::Config;
-use state::{AppState, CARGO_PKG_VERSION};
+use state::{AppState, CARGO_PKG_NAME, CARGO_PKG_VERSION};
 use tracing_actix_web::TracingLogger;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     println!("服务启动中...");
     let _ = logger::tracing_init().await;
-    debug!("日志记录器已初始化");
+    println!("日志记录器已初始化");
 
+    let ip = utils::local_ip();
     let config = Config::new();
 
     let db = Config::init_db(&config).await;
@@ -41,19 +42,28 @@ async fn main() -> std::io::Result<()> {
     });
     let server_host = config.server.host;
     let server_port = config.server.port;
+    let mut ip_tips: Vec<String> = vec![];
     let server_bind = match config.tls.enabled.as_str() {
         "rustls-0_23" => {
-            println!("使用SSL(Rustls)协议启动服务，监听地址: https://{server_host}:{server_port}");
+            ip_tips.push(format!("➜ Network: https://{ip}:{server_port}"));
             http_server.bind_rustls_0_23((server_host, server_port), Config::rustls_config(&config))
         }
         "openssl" => {
-            println!("使用SSL(OpenSSL)协议启动服务，监听地址: https://{server_host}:{server_port}");
+            ip_tips.push(format!("➜ Network: https://{ip}:{server_port}"));
             http_server.bind_openssl((server_host, server_port), Config::openssl_builder(&config))
         }
         _ => {
-            println!("使用 HTTP 协议启动服务，监听地址: http://{server_host}:{server_port}");
+            ip_tips.push(format!("➜ Local:   http://localhost:{server_port}"));
+            ip_tips.push(format!("➜ Local:   http://127.0.0.1:{server_port}"));
+            if ip != "127.0.0.1" {
+                ip_tips.push(format!("➜ Network: http://{ip}:{server_port}"));
+            }
             http_server.bind((server_host, server_port))
         }
     };
+    println!("{CARGO_PKG_NAME} v{CARGO_PKG_VERSION} 服务启动成功:");
+    for tip in ip_tips.iter() {
+        println!("{tip}");
+    }
     server_bind?.run().await
 }

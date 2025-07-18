@@ -15,3 +15,4 @@ pub mod handlers;
 pub mod logger;
 pub mod models;
 pub mod state;
+pub mod utils;
