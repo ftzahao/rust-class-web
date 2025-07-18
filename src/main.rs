@@ -12,15 +12,12 @@ use actix_web::{
 };
 use config::Config;
 use state::{AppState, CARGO_PKG_VERSION};
-
 use tracing_actix_web::TracingLogger;
-
-mod entity;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     println!("服务启动中...");
-    let _guard = log::tracing_init();
+    let _ = logger::tracing_init().await;
     debug!("日志记录器已初始化");
 
     let config = Config::new();

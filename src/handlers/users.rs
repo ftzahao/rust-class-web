@@ -1,5 +1,5 @@
-use crate::entity::users::{ActiveModel as UserActiveModel, Entity as Users, Model as UserModel};
-use crate::state::AppState;
+use crate::entity::users::{ActiveModel as UserActiveModel, Entity as Users};
+use crate::state::{ARGON2_SALT, AppState};
 use actix_web::{
     Responder, Result, delete, post,
     web::{Data, Json, Path},
@@ -53,12 +53,16 @@ pub async fn create_user(
 ) -> Result<impl Responder> {
     println!("{:#?}", params);
 
+    let argon2_config = argon2::Config::default();
+    let hashed_password =
+        argon2::hash_encoded(params.pass_word.as_bytes(), ARGON2_SALT, &argon2_config).unwrap();
+
     // 使用 sea-orm 创建用户
     let user = UserActiveModel {
         id: NotSet, // 自增ID，不需要设置
         name: Set(params.name.to_string()),
         email: Set(params.email.to_string()),
-        pass_word: Set(params.pass_word.to_string()),
+        pass_word: Set(hashed_password),
         status: Set("normal".to_string()),
         create_time: Set(Utc::now().naive_utc()),
         update_time: Set(Utc::now().naive_utc()),
