@@ -4,3 +4,5 @@
 /.sqlx/**/*
 .DS_Store
 /data
+key.pem
+cert.pem
