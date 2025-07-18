@@ -1,14 +1,29 @@
+# 服务器启动配置
 [server]
+# 服务器主机地址
 host = "0.0.0.0"
+# 服务器端口
 port = 8001
 
-[database]
+# 数据库配置
+[db]
+# 数据库类型 (目前仅支持 sqlite)
 db_type = "sqlite"
+# 数据库路径
 path = "./data/db.sqlite"
+# 最大连接数
 max_connections = 100
+# 最小连接数
 min_connections = 3
 
-# [tls]
-# enabled = "default"
-# cert_path = "./cert.pem"
-# key_path = "./key.pem"
+# TLS 配置
+[tls]
+# 启用的 TLS 版本
+# - "default": 不启用 TLS
+# - "rustls-0_23": 使用 Rustls 0.23
+# - "openssl": 使用 OpenSSL
+enabled = "default"
+# 证书文件路径
+cert_path = "./cert.pem"
+# 密钥文件路径
+key_path = "./key.pem"

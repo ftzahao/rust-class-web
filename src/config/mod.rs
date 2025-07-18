@@ -21,8 +21,24 @@ use sea_orm::{ConnectOptions, ConnectionTrait, Database, DatabaseConnection};
 #[derive(Serialize, Deserialize, Clone, Default, Debug)]
 #[serde(default)]
 pub struct Config {
+    /// 服务器启动配置
+    /// - host 服务器主机地址
+    /// - port 服务器端口
     pub server: Server,
+    /// 数据库配置
+    /// - db_type 数据库类型
+    /// - path 数据库路径
+    /// - max_connections 最大连接数
+    /// - min_connections 最小连接数
     pub db: Db,
+    /// TLS配置模块
+    /// 使用 Rustls 或 OpenSSL 进行 TLS 加密
+    /// - enabled: 启用的 TLS 版本
+    ///   - "default": 不启用 TLS
+    ///   - "rustls-0_23": 使用 Rustls 0.23
+    ///   - "openssl": 使用 OpenSSL
+    /// - cert_path: 证书文件路径
+    /// - key_path: 密钥文件路径
     pub tls: Tls,
 }
 
