@@ -125,6 +125,7 @@ impl Config {
 
 /// 检查数据库的完整性，不完整的部分给予补充
 async fn create_db_table(pool: DatabaseConnection) {
+    // 新增用户表
     pool.execute_unprepared("CREATE TABLE IF NOT EXISTS users(
         id          INTEGER primary key AUTOINCREMENT not null,
         name        text                              not null,
@@ -133,5 +134,16 @@ async fn create_db_table(pool: DatabaseConnection) {
         create_time datetime                          not null default (datetime('now', 'localtime')), -- 'create datetime'
         update_time datetime                          not null default (datetime('now', 'localtime')), -- 'update datetime'
         status      char(10)                          not null default 'normal'                        -- comment 'status: normal, blocked, deleted'
+    )").await.unwrap();
+
+    // 新增设备管理表
+    pool.execute_unprepared("CREATE TABLE IF NOT EXISTS devices(
+        id          INTEGER primary key AUTOINCREMENT not null,           -- 唯一id
+        user_id     INTEGER                           not null,           -- users表中的id
+        token       text                              not null,           -- 设备token
+        create_time datetime                          not null default (datetime('now', 'localtime')), -- 创建时间
+        update_time datetime                          not null default (datetime('now', 'localtime')), -- 更新时间
+        name        text                              null,           -- 设备名称
+        FOREIGN KEY(user_id) REFERENCES users(id)
     )").await.unwrap();
 }

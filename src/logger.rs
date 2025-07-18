@@ -28,7 +28,7 @@ pub async fn tracing_init() -> Result<()> {
         .with_level(true)
         .with_target(false)
         .with_timer(timer)
-        // .json() // 取消此行以启用JSON输出
+        .json()
         .with_max_level(tracing::Level::TRACE)
         .init();
     Ok(())
