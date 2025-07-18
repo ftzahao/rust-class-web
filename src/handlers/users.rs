@@ -42,9 +42,10 @@ pub async fn get_query_users(
     }))
 }
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Validate)]
 struct CreateUser {
     name: String,
+    #[validate(email)]
     email: String,
     pass_word: String,
 }
@@ -116,8 +117,9 @@ pub async fn delete_user(
     }))
 }
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Validate)]
 struct LoginReq {
+    #[validate(email)]
     email: String,
     pass_word: String,
 }
@@ -194,7 +196,7 @@ pub async fn login(
 #[derive(Deserialize, Serialize)]
 struct LogoutReq {
     id: i32,
-    token: String,
+    token: Option<String>,
 }
 
 /// 处理用户登出请求
@@ -204,8 +206,11 @@ pub async fn logout(
     app_data: web::Data<AppState>,
 ) -> Result<HttpResponse, Error> {
     let mut query = devices::Entity::delete_many().filter(devices::Column::UserId.eq(data.id));
-    if !data.token.is_empty() {
-        query = query.filter(devices::Column::Token.eq(&data.token));
+    // token 可传可不传，传空字符串也视为删除所有
+    if let Some(token) = &data.token {
+        if !token.is_empty() {
+            query = query.filter(devices::Column::Token.eq(token));
+        }
     }
     let _ = query.exec(&app_data.db).await;
 

@@ -6,6 +6,8 @@ extern crate serde_json;
 extern crate actix_web;
 #[macro_use]
 extern crate tracing;
+#[macro_use]
+extern crate validator;
 
 pub mod config;
 pub mod entity;
