@@ -1,7 +1,7 @@
 use crate::entity::users::{ActiveModel as UserActiveModel, Entity as Users};
 use crate::state::{ARGON2_SALT, AppState};
 use actix_web::{
-    Responder, Result, delete, post,
+    Error, HttpResponse, Responder, Result, delete, post,
     web::{Data, Json, Path},
 };
 use chrono::Utc;
@@ -102,4 +102,45 @@ pub async fn delete_user(id: Path<i32>, app_data: Data<AppState>) -> Result<impl
         message: "ok",
     };
     Ok(Json(data))
+}
+
+#[derive(Deserialize, Serialize, Debug)]
+struct LoginReq {
+    email: String,
+    pass_word: String,
+}
+#[post("/login")]
+pub async fn login(data: Json<LoginReq>, app_data: Data<AppState>) -> Result<HttpResponse, Error> {
+    let user = Users::find()
+        .filter(crate::entity::users::Column::Email.eq(&data.email))
+        .one(&app_data.db)
+        .await
+        .map_err(actix_web::error::ErrorInternalServerError)?;
+
+    if let Some(user) = user {
+        // 验证密码
+        if argon2::verify_encoded(&user.pass_word, data.pass_word.as_bytes())
+            .map_err(actix_web::error::ErrorInternalServerError)?
+        {
+            // 密码验证成功
+            return Ok(HttpResponse::Ok().json(PostReqJson {
+                code: 200,
+                data: user,
+                message: "Login successful",
+            }));
+        } else {
+            // 密码错误
+            return Ok(HttpResponse::Unauthorized().json(PostReqJson {
+                code: 401,
+                data: (),
+                message: "Invalid password",
+            }));
+        }
+    };
+
+    Ok(HttpResponse::Ok().json(PostReqJson {
+        code: 200,
+        data: data,
+        message: "Login successful",
+    }))
 }

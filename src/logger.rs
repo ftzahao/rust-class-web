@@ -1,6 +1,6 @@
 use anyhow::Result;
 use tracing_appender::rolling;
-use tracing_subscriber::fmt::writer::MakeWriterExt;
+use tracing_subscriber::fmt::{self, writer::MakeWriterExt};
 
 pub async fn tracing_init() -> Result<()> {
     // 将所有“跟踪”事件记录到前缀为“调试”的文件中。因为这些文件将非常频繁地写入，每分钟滚动日志文件。
@@ -9,6 +9,14 @@ pub async fn tracing_init() -> Result<()> {
     let warn_file = rolling::daily("./data/logs", "warnings").with_max_level(tracing::Level::WARN);
 
     let all_files = debug_file.and(warn_file);
+
+    let timer = time::format_description::parse(
+        "[year]-[month padding:zero]-[day padding:zero] [hour]:[minute]:[second]",
+    )
+    .expect("Failed to parse time format description");
+    let time_offset =
+        time::UtcOffset::current_local_offset().unwrap_or_else(|_| time::UtcOffset::UTC);
+    let timer = fmt::time::OffsetTime::new(time_offset, timer);
 
     tracing_subscriber::fmt()
         .with_writer(all_files)
@@ -19,6 +27,7 @@ pub async fn tracing_init() -> Result<()> {
         .with_line_number(true)
         .with_level(true)
         .with_target(false)
+        .with_timer(timer)
         // .json() // 取消此行以启用JSON输出
         .with_max_level(tracing::Level::TRACE)
         .init();
