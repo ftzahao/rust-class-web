@@ -1,51 +1,31 @@
 mod db;
+mod logger;
 mod server;
-mod tls;
 
 use db::Db;
+use logger::Logger;
 use server::Server;
-use tls::Tls;
 
 use figment::{
     Figment,
     providers::{Format, Serialized, Toml},
 };
-use openssl::ssl::{SslAcceptor, SslAcceptorBuilder, SslFiletype, SslMethod};
-use rustls::{
-    ServerConfig,
-    pki_types::{CertificateDer, PrivateKeyDer, pem::PemObject},
-};
-
-use sea_orm::{ConnectOptions, ConnectionTrait, Database, DatabaseConnection};
 
 #[derive(Serialize, Deserialize, Clone, Default, Debug)]
 #[serde(default)]
 pub struct Config {
-    /// 服务器启动配置
-    /// - host 服务器主机地址
-    /// - port 服务器端口
+    /// 服务器配置
     pub server: Server,
     /// 数据库配置
-    /// - db_type 数据库类型
-    /// - path 数据库路径
-    /// - max_connections 最大连接数
-    /// - min_connections 最小连接数
     pub db: Db,
-    /// TLS配置模块
-    /// 使用 Rustls 或 OpenSSL 进行 TLS 加密
-    /// - enabled: 启用的 TLS 版本
-    ///   - "default": 不启用 TLS
-    ///   - "rustls-0_23": 使用 Rustls 0.23
-    ///   - "openssl": 使用 OpenSSL
-    /// - cert_path: 证书文件路径
-    /// - key_path: 密钥文件路径
-    pub tls: Tls,
+    /// 日志配置
+    pub logger: Logger,
 }
 
 impl Config {
     /// 创建一个新的配置实例
     pub fn new() -> Self {
-        debug!("加载配置");
+        println!("加载配置文件 config.toml");
         let config: Config = Figment::new()
             // 先加载结构体默认值
             .merge(Serialized::defaults(Config::default()))
@@ -53,97 +33,7 @@ impl Config {
             .merge(Toml::file("config.toml"))
             .extract()
             .expect("配置加载失败");
-        debug!("{:#?}", config);
+        println!("配置加载完成: {:#?}", config);
         config
     }
-}
-
-impl Config {
-    /// 获取 OpenSSL 的 SslAcceptorBuilder
-    pub fn openssl_builder(&self) -> SslAcceptorBuilder {
-        // load TLS keys
-        // to create a self-signed temporary cert for testing:
-        // `openssl req -x509 -newkey rsa:4096 -nodes -keyout key.pem -out cert.pem -days 365 -subj '/CN=localhost'`
-        let mut builder = SslAcceptor::mozilla_intermediate(SslMethod::tls()).unwrap();
-        builder
-            .set_private_key_file(self.tls.key_path.clone(), SslFiletype::PEM)
-            .unwrap();
-        builder
-            .set_certificate_chain_file(self.tls.cert_path.clone())
-            .unwrap();
-        builder
-    }
-    /// 获取 Rustls 的 ServerConfig
-    pub fn rustls_config(&self) -> ServerConfig {
-        // to create a self-signed temporary cert for testing:
-        // `mkcert -key-file key.pem -cert-file cert.pem 127.0.0.1 localhost`
-        // to install mkcert CA in the system trust store, run:
-        // `mkcert -install`
-        // to uninstall mkcert CA from the system trust store, run:
-        // `mkcert -uninstall`
-        rustls::crypto::aws_lc_rs::default_provider()
-            .install_default()
-            .unwrap();
-
-        // load TLS key/cert files
-        let cert_chain = CertificateDer::pem_file_iter(self.tls.cert_path.clone())
-            .unwrap()
-            .flatten()
-            .collect();
-
-        let key_der = PrivateKeyDer::from_pem_file(self.tls.key_path.clone())
-            .expect("Could not locate PKCS 8 private keys.");
-
-        // set up TLS config options
-        ServerConfig::builder()
-            .with_no_client_auth()
-            .with_single_cert(cert_chain, key_der)
-            .unwrap()
-    }
-}
-
-impl Config {
-    /// 获取数据库连接 URL
-    pub fn database_url(&self) -> String {
-        format!("{}://{}?mode=rwc", self.db.db_type, self.db.path)
-    }
-    /// 初始化数据库连接池
-    pub async fn init_db(config: &Config) -> DatabaseConnection {
-        let url = config.database_url();
-        println!("正在连接数据库: {url}");
-
-        let mut opt = ConnectOptions::new(url);
-        opt.max_connections(config.db.max_connections)
-            .min_connections(config.db.min_connections)
-            .sqlx_logging(true);
-        let db = Database::connect(opt).await.unwrap();
-        create_db_table(db.clone()).await; // 确保数据库表存在
-        println!("数据库连接成功");
-        db
-    }
-}
-
-/// 检查数据库的完整性，不完整的部分给予补充
-async fn create_db_table(pool: DatabaseConnection) {
-    // 新增用户表
-    pool.execute_unprepared("CREATE TABLE IF NOT EXISTS users(
-        id          INTEGER primary key AUTOINCREMENT not null,
-        name        text                              not null,
-        email       char(20) UNIQUE                   not null,
-        pass_word   char(65)                          not null,                                        -- 'passwd hash'
-        create_time datetime                          not null default (datetime('now', 'localtime')), -- 'create datetime'
-        update_time datetime                          not null default (datetime('now', 'localtime')), -- 'update datetime'
-        status      char(10)                          not null default 'normal'                        -- comment 'status: normal, blocked, deleted'
-    )").await.unwrap();
-
-    // 新增设备管理表
-    pool.execute_unprepared("CREATE TABLE IF NOT EXISTS devices(
-        id          INTEGER primary key AUTOINCREMENT not null,           -- 唯一id
-        user_id     INTEGER                           not null,           -- users表中的id
-        token       text                              not null,           -- 设备token
-        create_time datetime                          not null default (datetime('now', 'localtime')), -- 创建时间
-        update_time datetime                          not null default (datetime('now', 'localtime')), -- 更新时间
-        name        text                              null,           -- 设备名称
-        FOREIGN KEY(user_id) REFERENCES users(id)
-    )").await.unwrap();
 }

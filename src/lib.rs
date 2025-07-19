@@ -12,7 +12,7 @@ extern crate validator;
 pub mod config;
 pub mod entity;
 pub mod handlers;
-pub mod logger;
+pub mod middleware;
 pub mod models;
 pub mod state;
 pub mod utils;

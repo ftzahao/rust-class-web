@@ -130,7 +130,7 @@ struct LoginResp<T> {
     message: &'static str,
 }
 
-#[post("/login")]
+#[post("/users/login")]
 pub async fn login(
     data: web::Json<LoginReq>,
     app_data: web::Data<AppState>,
