@@ -53,7 +53,8 @@ max_level = "info"
 # - "daily" | "DAILY" 每天滚动
 # - "never" | "NEVER" 不滚动
 rotation = "minutely"
-# 最大日志文件数
+# 最大日志文件数，仅对日志文件的滚动策略为 "minutely"、"hourly" 或 "daily" 时有效
+# 当达到最大日志文件数时，最旧的日志文件将被删除
 max_log_files = 30
 # 是否启用 JSON 格式的日志输出
 enable_json_formatter = false
