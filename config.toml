@@ -12,9 +12,9 @@ port = 8001
 # - "openssl": 使用 OpenSSL
 enabled_tls = "default"
 # 证书文件路径
-cert_path = "./cert.pem"
+tls_cert_path = "./cert.pem"
 # 密钥文件路径
-key_path = "./key.pem"
+tls_key_path = "./key.pem"
 
 # 数据库配置
 [db]
