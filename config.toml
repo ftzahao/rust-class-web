@@ -39,8 +39,14 @@ directory = "./data/logs"
 filename_prefix = "app"
 # 日志文件名的后缀
 filename_suffix = "log"
-# 日志级别
-level = "info"
+# 日志最大级别
+# 可选值包括：
+# - "error" | "ERROR" 错误级别（1级）
+# - "warn" | "WARN" 警告级别（2级）
+# - "info" | "INFO" 信息级别（3级）
+# - "debug" | "DEBUG" 调试级别（4级）
+# - "trace" | "TRACE" 跟踪级别（5级）
+max_level = "info"
 # 日志文件的滚动策略
 # - "minutely" | "MINUTELY" 每分钟滚动
 # - "hourly" | "HOURLY" 每小时滚动

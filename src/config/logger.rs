@@ -20,8 +20,8 @@ pub struct Logger {
     pub filename_prefix: String,
     /// 日志文件名的后缀
     pub filename_suffix: String,
-    /// 日志级别
-    pub level: String,
+    /// 日志最大级别
+    pub max_level: String,
     /// 最大日志文件数
     pub max_log_files: usize,
     /// 是否启用 JSON 格式的日志输出
@@ -55,7 +55,7 @@ impl Default for Logger {
             directory: String::from("./data/logs"),
             filename_prefix: String::from("app"),
             filename_suffix: String::from("log"),
-            level: String::from("info"),
+            max_level: String::from("info"),
             max_log_files: 30,
             enable_json_formatter: false,
             rotation: String::from("minutely"),
@@ -95,7 +95,7 @@ impl Logger {
         timer
     }
     pub fn max_level(&self) -> tracing::Level {
-        match self.level.to_uppercase().as_str() {
+        match self.max_level.to_uppercase().as_str() {
             "TRACE" => tracing::Level::TRACE,
             "DEBUG" => tracing::Level::DEBUG,
             "INFO" => tracing::Level::INFO,
