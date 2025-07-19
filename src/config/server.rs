@@ -4,6 +4,8 @@ use rustls::{
     pki_types::{CertificateDer, PrivateKeyDer, pem::PemObject},
 };
 
+use crate::utils;
+
 /// 服务器启动配置
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(default)]
@@ -75,5 +77,28 @@ impl Server {
             .with_no_client_auth()
             .with_single_cert(cert_chain, key_der)
             .unwrap()
+    }
+    /// 打印服务器启动的地址
+    pub fn print_server_startup_address(&self) {
+        let mut ip_tips: Vec<String> = vec![];
+        let ip = utils::local_ip();
+        match self.enabled_tls.as_str() {
+            "rustls-0_23" => {
+                ip_tips.push(format!("➜ Network: https://{ip}:{}", self.port));
+            }
+            "openssl" => {
+                ip_tips.push(format!("➜ Network: https://{ip}:{}", self.port));
+            }
+            _ => {
+                ip_tips.push(format!("➜ Local:   http://localhost:{}", self.port));
+                ip_tips.push(format!("➜ Local:   http://127.0.0.1:{}", self.port));
+                if ip != "127.0.0.1" {
+                    ip_tips.push(format!("➜ Network: http://{ip}:{}", self.port));
+                }
+            }
+        }
+        for tip in ip_tips.iter() {
+            println!("{tip}");
+        }
     }
 }

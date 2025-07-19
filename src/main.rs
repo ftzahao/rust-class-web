@@ -18,7 +18,6 @@ async fn main() -> std::io::Result<()> {
     let _ = Config::tracing_init(&config).await;
     println!("日志记录器初始化完成");
     let db = Config::init_db(&config).await;
-    let ip = utils::local_ip();
 
     let http_server = HttpServer::new(move || {
         App::new()
@@ -39,28 +38,15 @@ async fn main() -> std::io::Result<()> {
     });
     let server_host = config.server.host;
     let server_port = config.server.port;
-    let mut ip_tips: Vec<String> = vec![];
-    let server_bind = match config.server.enabled_tls.as_str() {
-        "rustls-0_23" => {
-            ip_tips.push(format!("➜ Network: https://{ip}:{server_port}"));
-            http_server.bind_rustls_0_23((server_host, server_port), config.server.rustls_config())
-        }
-        "openssl" => {
-            ip_tips.push(format!("➜ Network: https://{ip}:{server_port}"));
-            http_server.bind_openssl((server_host, server_port), config.server.openssl_builder())
-        }
-        _ => {
-            ip_tips.push(format!("➜ Local:   http://localhost:{server_port}"));
-            ip_tips.push(format!("➜ Local:   http://127.0.0.1:{server_port}"));
-            if ip != "127.0.0.1" {
-                ip_tips.push(format!("➜ Network: http://{ip}:{server_port}"));
-            }
-            http_server.bind((server_host, server_port))
-        }
-    };
-    println!("{CARGO_PKG_NAME} v{CARGO_PKG_VERSION} 服务启动成功:");
-    for tip in ip_tips.iter() {
-        println!("{tip}");
-    }
+    let server_bind =
+        match config.server.enabled_tls.as_str() {
+            "rustls-0_23" => http_server
+                .bind_rustls_0_23((server_host, server_port), config.server.rustls_config()),
+            "openssl" => http_server
+                .bind_openssl((server_host, server_port), config.server.openssl_builder()),
+            _ => http_server.bind((server_host, server_port)),
+        };
+    println!("{CARGO_PKG_NAME} v{CARGO_PKG_VERSION} 服务启动成功！");
+    config.server.print_server_startup_address();
     server_bind?.run().await
 }
