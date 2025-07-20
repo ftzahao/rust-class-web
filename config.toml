@@ -8,8 +8,8 @@ host = "0.0.0.0"
 port = 8001
 # 启用的 TLS 版本
 # - false: 不启用 TLS
-# - "rustls-0_23": 使用 Rustls 0.23
-# - true | "openssl": 使用 OpenSSL
+# - true | "rustls-0_23": 使用 Rustls 0.23
+# - "openssl": 使用 OpenSSL
 enabled_tls = false
 # 证书文件路径
 tls_cert_path = "./cert.pem"

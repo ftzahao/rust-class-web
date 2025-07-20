@@ -45,7 +45,7 @@ async fn main() -> std::io::Result<()> {
             EnabledTls::Mode(ref s) if s == "openssl" => http_server
                 .bind_openssl((server_host, server_port), config.server.openssl_builder()),
             EnabledTls::Enabled => http_server
-                .bind_openssl((server_host, server_port), config.server.openssl_builder()),
+                .bind_rustls_0_23((server_host, server_port), config.server.rustls_config()),
             _ => http_server.bind((server_host, server_port)),
         };
     println!("{CARGO_PKG_NAME} v{CARGO_PKG_VERSION} 服务启动成功！");
