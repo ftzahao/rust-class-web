@@ -110,17 +110,34 @@ impl Config {
     pub async fn tracing_init(&self) -> Result<()> {
         println!("日志记录器正在初始化...");
         let logger = &self.logger;
+        let Logger {
+            make_writer,
+            directory: _,
+            filename_prefix: _,
+            filename_suffix: _,
+            max_level: _,
+            max_log_files: _,
+            enable_json_formatter: _,
+            rotation: _,
+            show_target,
+            show_thread_ids,
+            show_thread_names,
+            show_file_paths,
+            show_line_number,
+            show_level,
+            show_ansi,
+        } = logger;
         let builder = tracing_subscriber::fmt()
-            .with_ansi(logger.show_ansi)
-            .with_thread_ids(logger.show_thread_ids)
-            .with_thread_names(logger.show_thread_names)
-            .with_file(logger.show_file_paths)
-            .with_line_number(logger.show_line_number)
-            .with_level(logger.show_level)
-            .with_target(logger.show_target)
+            .with_ansi(*show_ansi)
+            .with_thread_ids(*show_thread_ids)
+            .with_thread_names(*show_thread_names)
+            .with_file(*show_file_paths)
+            .with_line_number(*show_line_number)
+            .with_level(*show_level)
+            .with_target(*show_target)
             .with_timer(Logger::message_time_stamp())
             .with_max_level(Logger::max_level(logger));
-        let builder = if logger.make_writer.to_uppercase().as_str() == "FILE" {
+        let builder = if make_writer.to_uppercase().as_str() == "FILE" {
             builder.with_writer(BoxMakeWriter::new(Logger::file_appender(logger)))
         } else {
             builder.with_writer(BoxMakeWriter::new(std::io::stdout))
