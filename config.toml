@@ -46,7 +46,7 @@ filename_suffix = "log"
 # - "info" | "INFO" 信息级别（3级）
 # - "debug" | "DEBUG" 调试级别（4级）
 # - "trace" | "TRACE" 跟踪级别（5级）
-max_level = "info"
+max_level = "debug"
 # 日志文件的滚动策略
 # - "minutely" | "MINUTELY" 每分钟滚动
 # - "hourly" | "HOURLY" 每小时滚动
@@ -57,9 +57,9 @@ rotation = "minutely"
 # 当达到最大日志文件数时，最旧的日志文件将被删除
 max_log_files = 30
 # 是否启用 JSON 格式的日志输出
-enable_json_formatter = false
+enable_json_formatter = true
 # 是否显示事件的目标
-show_target = false
+show_target = true
 # 是否显示线程 ID
 show_thread_ids = true
 # 是否显示线程名称

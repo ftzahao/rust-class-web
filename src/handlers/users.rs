@@ -1,7 +1,8 @@
 use crate::entity::{devices, users};
+use crate::errors::AppError;
 use crate::models::token::generate_token;
 use crate::state::{ARGON2_SALT, AppState};
-use actix_web::{Error, HttpResponse, Result, web};
+use actix_web::{HttpResponse, Result, web};
 use chrono::Utc;
 use sea_orm::{
     ActiveModelTrait, ActiveValue::NotSet, ColumnTrait, DeleteResult, EntityTrait, QueryFilter, Set,
@@ -24,15 +25,14 @@ struct PostReqJson<T> {
 pub async fn get_query_users(
     info: web::Json<Info>,
     app_data: web::Data<AppState>,
-) -> Result<HttpResponse, Error> {
+) -> Result<HttpResponse, AppError> {
     println!("{:#?}", info.name);
 
     // 使用 sea-orm 进行查询
     let user_list = users::Entity::find()
         .filter(crate::entity::users::Column::Name.contains(&info.name))
         .all(&app_data.db)
-        .await
-        .map_err(actix_web::error::ErrorInternalServerError)?;
+        .await?;
 
     println!("{:#?}", user_list);
     Ok(HttpResponse::Ok().json(PostReqJson {
@@ -53,12 +53,13 @@ struct CreateUser {
 pub async fn create_user(
     params: web::Json<CreateUser>,
     app_data: web::Data<AppState>,
-) -> Result<HttpResponse, Error> {
+) -> Result<HttpResponse, AppError> {
     println!("{:#?}", params);
 
     let argon2_config = argon2::Config::default();
     let hashed_password =
-        argon2::hash_encoded(params.pass_word.as_bytes(), ARGON2_SALT, &argon2_config).unwrap();
+        argon2::hash_encoded(params.pass_word.as_bytes(), ARGON2_SALT, &argon2_config)
+            .map_err(|e| AppError::InternalError(format!("Password hashing error: {}", e)))?;
 
     // 使用 sea-orm 创建用户
     let user = users::ActiveModel {
@@ -71,7 +72,7 @@ pub async fn create_user(
         update_time: Set(Utc::now().naive_utc()),
     };
 
-    let insert_result = user.insert(&app_data.db).await.unwrap();
+    let insert_result = user.insert(&app_data.db).await?;
     println!("插入结果: {:?}", insert_result);
 
     Ok(HttpResponse::Ok().json(PostReqJson {
@@ -83,9 +84,9 @@ pub async fn create_user(
 
 #[delete("/users/delete/{id}")]
 pub async fn delete_user(
-    id: web::Path<i32>,
+    id: web::Path<i64>,
     app_data: web::Data<AppState>,
-) -> Result<HttpResponse, Error> {
+) -> Result<HttpResponse, AppError> {
     let user_id = id.into_inner();
     println!("删除用户 ID: {}", user_id);
 
@@ -93,22 +94,19 @@ pub async fn delete_user(
     let device_delete_result: DeleteResult = devices::Entity::delete_many()
         .filter(crate::entity::devices::Column::UserId.eq(user_id))
         .exec(&app_data.db)
-        .await
-        .map_err(actix_web::error::ErrorInternalServerError)?;
+        .await?;
     println!("删除设备结果: {:?}", device_delete_result);
 
     // 使用 sea-orm 删除用户
-    let user: users::ActiveModel = users::Entity::find_by_id(user_id)
-        .one(&app_data.db)
-        .await
-        .map_err(actix_web::error::ErrorInternalServerError)?
-        .ok_or_else(|| actix_web::error::ErrorNotFound("User not found"))?
+    let model = users::Entity::find_by_id(user_id).one(&app_data.db).await?;
+    let user: users::ActiveModel = model
+        .ok_or(AppError::NotFound(format!(
+            "User with id {} not found",
+            user_id
+        )))?
         .into();
 
-    let delete_result = user
-        .delete(&app_data.db)
-        .await
-        .map_err(actix_web::error::ErrorInternalServerError)?;
+    let delete_result = user.delete(&app_data.db).await?;
     println!("删除结果: {:?}", delete_result);
     Ok(HttpResponse::Ok().json(PostReqJson {
         code: 200,
@@ -134,56 +132,39 @@ struct LoginResp<T> {
 pub async fn login(
     data: web::Json<LoginReq>,
     app_data: web::Data<AppState>,
-) -> Result<HttpResponse, Error> {
-    let user = users::Entity::find()
+) -> Result<HttpResponse, AppError> {
+    let user_opt = users::Entity::find()
         .filter(users::Column::Email.eq(&data.email))
         .one(&app_data.db)
-        .await
-        .map_err(actix_web::error::ErrorInternalServerError)?;
+        .await?;
 
-    if let Some(user) = user {
-        // 验证密码
+    if let Some(user) = user_opt {
         if argon2::verify_encoded(&user.pass_word, data.pass_word.as_bytes())
-            .map_err(actix_web::error::ErrorInternalServerError)?
+            .map_err(|e| AppError::InternalError(format!("Password verification error: {}", e)))?
         {
-            // 密码验证成功，生成 token
             let token = generate_token(&user.email);
-            // 登录成功，向设备表写入数据
             let device = devices::ActiveModel {
                 id: NotSet,
                 user_id: Set(user.id),
                 token: Set(token.clone()),
                 ..Default::default()
             };
-            // 设备表写入失败时返回 500
-            let insert_result = device.insert(&app_data.db).await;
-            match insert_result {
-                Ok(_) => {
-                    return Ok(HttpResponse::Ok().json(LoginResp {
-                        code: 200,
-                        data: json!({
-                            "user": user,
-                            "token": token
-                        }),
-                        message: "Login successful",
-                    }));
-                }
-                Err(e) => {
-                    return Err(actix_web::error::ErrorInternalServerError(format!(
-                        "设备写入失败: {}",
-                        e
-                    )));
-                }
+            if let Err(e) = device.insert(&app_data.db).await {
+                return Err(AppError::InternalError(format!("设备写入失败: {}", e)));
             }
+            return Ok(HttpResponse::Ok().json(LoginResp {
+                code: 200,
+                data: json!({ "user": user, "token": token }),
+                message: "Login successful",
+            }));
         } else {
-            // 密码错误
             return Ok(HttpResponse::Unauthorized().json(LoginResp::<()> {
                 code: 401,
                 data: (),
                 message: "Invalid password",
             }));
         }
-    };
+    }
 
     Ok(HttpResponse::Unauthorized().json(LoginResp::<()> {
         code: 401,
@@ -195,7 +176,7 @@ pub async fn login(
 /// 用户登出请求的结构体
 #[derive(Deserialize, Serialize)]
 struct LogoutReq {
-    id: i32,
+    id: i64,
     token: Option<String>,
 }
 
@@ -204,7 +185,7 @@ struct LogoutReq {
 pub async fn logout(
     data: web::Json<LogoutReq>,
     app_data: web::Data<AppState>,
-) -> Result<HttpResponse, Error> {
+) -> Result<HttpResponse, AppError> {
     let mut query = devices::Entity::delete_many().filter(devices::Column::UserId.eq(data.id));
     // token 可传可不传，传空字符串也视为删除所有
     if let Some(token) = &data.token {

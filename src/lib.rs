@@ -11,6 +11,7 @@ extern crate validator;
 
 pub mod config;
 pub mod entity;
+pub mod errors;
 pub mod handlers;
 pub mod middleware;
 pub mod models;

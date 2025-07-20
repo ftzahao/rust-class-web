@@ -87,10 +87,8 @@ impl Logger {
     pub fn message_time_stamp() -> OffsetTime<Vec<BorrowedFormatItem<'static>>> {
         let timer = OffsetTime::new(
             UtcOffset::current_local_offset().unwrap_or_else(|_| UtcOffset::UTC),
-            format_description::parse(
-                "[year]-[month padding:zero]-[day padding:zero] [hour]:[minute]:[second]",
-            )
-            .expect("Failed to parse time format description"),
+            format_description::parse("[offset_hour sign:mandatory]:[offset_minute] [year]-[month]-[day] [hour]:[minute]:[second]")
+                .expect("Failed to parse time format description"),
         );
         timer
     }
