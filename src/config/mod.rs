@@ -1,6 +1,6 @@
-mod db;
-mod logger;
-mod server;
+pub mod db;
+pub mod logger;
+pub mod server;
 
 use db::Db;
 use logger::Logger;

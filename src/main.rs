@@ -7,7 +7,7 @@ use actix_web::{
     middleware::{Compat, Compress, DefaultHeaders, NormalizePath, from_fn},
     web::Data,
 };
-use config::Config;
+use config::{Config, server::EnabledTls};
 use state::{AppState, CARGO_PKG_NAME, CARGO_PKG_VERSION};
 use tracing_actix_web::TracingLogger;
 
@@ -39,10 +39,12 @@ async fn main() -> std::io::Result<()> {
     let server_host = config.server.host;
     let server_port = config.server.port;
     let server_bind =
-        match config.server.enabled_tls.as_str() {
-            "rustls-0_23" => http_server
+        match config.server.enabled_tls {
+            EnabledTls::Mode(ref s) if s == "rustls-0_23" => http_server
                 .bind_rustls_0_23((server_host, server_port), config.server.rustls_config()),
-            "openssl" => http_server
+            EnabledTls::Mode(ref s) if s == "openssl" => http_server
+                .bind_openssl((server_host, server_port), config.server.openssl_builder()),
+            EnabledTls::Enabled => http_server
                 .bind_openssl((server_host, server_port), config.server.openssl_builder()),
             _ => http_server.bind((server_host, server_port)),
         };

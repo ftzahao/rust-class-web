@@ -7,10 +7,10 @@ host = "0.0.0.0"
 # 服务器端口
 port = 8001
 # 启用的 TLS 版本
-# - "default": 不启用 TLS
+# - false: 不启用 TLS
 # - "rustls-0_23": 使用 Rustls 0.23
-# - "openssl": 使用 OpenSSL
-enabled_tls = "default"
+# - true | "openssl": 使用 OpenSSL
+enabled_tls = false
 # 证书文件路径
 tls_cert_path = "./cert.pem"
 # 密钥文件路径

@@ -17,20 +17,22 @@
 
   - 需要同目录下创建 `config.toml` 文件
 
+    以下为 `config.toml` 文件内容默认值，所有配置均可以删除或注释
+
     ```toml
     # 服务器启动配置
     [server]
     # 服务器主机地址
     # - "0.0.0.0", "127.0.0.1", "localhost" => 表示监听所有地址
-    # - tls.enabled 等于 "rustls-0_23" 或 "openssl" 时，必须使用网络地址访问
+    # - server.enabled_tls 等于 "rustls-0_23" 或 "openssl" 时，必须使用网络地址访问
     host = "0.0.0.0"
     # 服务器端口
     port = 8001
     # 启用的 TLS 版本
     # - "default": 不启用 TLS
     # - "rustls-0_23": 使用 Rustls 0.23
-    # - "openssl": 使用 OpenSSL
-    enabled_tls = "default"
+    # - true | "openssl": 使用 OpenSSL
+    enabled_tls = false
     # 证书文件路径
     tls_cert_path = "./cert.pem"
     # 密钥文件路径

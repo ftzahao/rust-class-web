@@ -6,6 +6,56 @@ use rustls::{
 
 use crate::utils;
 
+use serde::{Deserialize, Deserializer};
+use serde_json::Value;
+
+#[derive(Debug, Clone, Serialize)]
+pub enum EnabledTls {
+    Disabled,
+    Enabled,
+    Mode(String),
+}
+
+impl Default for EnabledTls {
+    fn default() -> Self {
+        EnabledTls::Disabled
+    }
+}
+
+impl EnabledTls {
+    /// 是否启用 TLS
+    pub fn use_tls(&self) -> bool {
+        !matches!(self, EnabledTls::Disabled)
+    }
+    /// 返回使用的 TLS 方法（"none"/"openssl"/自定义模式）
+    pub fn method(&self) -> &str {
+        match self {
+            EnabledTls::Disabled => "none",
+            EnabledTls::Enabled => "openssl",
+            EnabledTls::Mode(mode) => mode.as_str(),
+        }
+    }
+}
+
+impl<'de> Deserialize<'de> for EnabledTls {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let v = Value::deserialize(deserializer)?;
+        Ok(match v {
+            Value::Bool(true) => EnabledTls::Enabled,
+            Value::Bool(false) => EnabledTls::Disabled,
+            Value::String(s) => match s.as_str() {
+                "true" => EnabledTls::Enabled,
+                "false" => EnabledTls::Disabled,
+                other => EnabledTls::Mode(other.to_string()),
+            },
+            _ => EnabledTls::Disabled,
+        })
+    }
+}
+
 /// 服务器启动配置
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(default)]
@@ -15,10 +65,10 @@ pub struct Server {
     /// 服务器端口
     pub port: u16,
     /// 启用的 TLS 版本
-    /// - "default": 不启用 TLS
+    /// - false: 不启用 TLS
     /// - "rustls-0_23": 使用 Rustls 0.23
-    /// - "openssl": 使用 OpenSSL
-    pub enabled_tls: String,
+    /// - true | "openssl": 使用 OpenSSL
+    pub enabled_tls: EnabledTls,
     /// 证书路径
     pub tls_cert_path: String,
     /// 密钥路径
@@ -29,7 +79,7 @@ impl Default for Server {
         Server {
             host: "0.0.0.0".parse().unwrap(),
             port: 8001,
-            enabled_tls: "default".to_string(),
+            enabled_tls: EnabledTls::Disabled,
             tls_cert_path: "cert.pem".to_string(),
             tls_key_path: "key.pem".to_string(),
         }
@@ -80,25 +130,24 @@ impl Server {
     }
     /// 打印服务器启动的地址
     pub fn print_server_startup_address(&self) {
-        let mut ip_tips: Vec<String> = vec![];
+        let use_tls = self.enabled_tls.use_tls();
+        println!("{use_tls}");
+        let scheme = if use_tls { "https" } else { "http" };
         let ip = utils::local_ip();
-        match self.enabled_tls.as_str() {
-            "rustls-0_23" => {
-                ip_tips.push(format!("➜ Network: https://{ip}:{}", self.port));
-            }
-            "openssl" => {
-                ip_tips.push(format!("➜ Network: https://{ip}:{}", self.port));
-            }
-            _ => {
-                ip_tips.push(format!("➜ Local:   http://localhost:{}", self.port));
-                ip_tips.push(format!("➜ Local:   http://127.0.0.1:{}", self.port));
-                if ip != "127.0.0.1" {
-                    ip_tips.push(format!("➜ Network: http://{ip}:{}", self.port));
-                }
+        let mut tips = Vec::new();
+
+        if use_tls {
+            tips.push(format!("➜ Network: {scheme}://{ip}"));
+        } else {
+            tips.push(format!("➜ Local:   {scheme}://localhost"));
+            tips.push(format!("➜ Local:   {scheme}://127.0.0.1"));
+            if ip != "127.0.0.1" {
+                tips.push(format!("➜ Network: {scheme}://{ip}"));
             }
         }
-        for tip in ip_tips.iter() {
-            println!("{tip}");
+
+        for tip in tips {
+            println!("{tip}:{}", self.port);
         }
     }
 }
