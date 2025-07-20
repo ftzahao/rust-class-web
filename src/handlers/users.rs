@@ -8,6 +8,7 @@ use sea_orm::{
     ActiveModelTrait, ActiveValue::NotSet, ColumnTrait, DeleteResult, EntityTrait, QueryFilter, Set,
 };
 use serde::{Deserialize, Serialize};
+use validator::Validate;
 
 #[derive(Deserialize, Serialize, Debug)]
 struct Info {
@@ -45,7 +46,7 @@ pub async fn get_query_users(
 #[derive(Deserialize, Serialize, Debug, Validate)]
 struct CreateUser {
     name: String,
-    #[validate(email)]
+    #[validate(email(message = "无效的邮箱地址"))]
     email: String,
     pass_word: String,
 }
@@ -55,11 +56,15 @@ pub async fn create_user(
     app_data: web::Data<AppState>,
 ) -> Result<HttpResponse, AppError> {
     println!("{:#?}", params);
+    // 参数验证
+    if let Err(e) = params.validate() {
+        return Err(AppError::ValidationError(format!("{e}")));
+    }
 
     let argon2_config = argon2::Config::default();
     let hashed_password =
         argon2::hash_encoded(params.pass_word.as_bytes(), ARGON2_SALT, &argon2_config)
-            .map_err(|e| AppError::InternalError(format!("Password hashing error: {}", e)))?;
+            .map_err(|e| AppError::InternalError(format!("{e}")))?;
 
     // 使用 sea-orm 创建用户
     let user = users::ActiveModel {
@@ -84,10 +89,13 @@ pub async fn create_user(
 
 #[delete("/users/delete/{id}")]
 pub async fn delete_user(
-    id: web::Path<i64>,
+    id: web::Path<String>,
     app_data: web::Data<AppState>,
 ) -> Result<HttpResponse, AppError> {
-    let user_id = id.into_inner();
+    let id_str = id.into_inner();
+    let user_id: i64 = id_str
+        .parse()
+        .map_err(|_| AppError::ParseError(format!("无法解析用户ID: {id_str}")))?;
     println!("删除用户 ID: {}", user_id);
 
     // 先删除该用户下的所有设备
@@ -99,12 +107,11 @@ pub async fn delete_user(
 
     // 使用 sea-orm 删除用户
     let model = users::Entity::find_by_id(user_id).one(&app_data.db).await?;
-    let user: users::ActiveModel = model
-        .ok_or(AppError::NotFound(format!(
-            "User with id {} not found",
-            user_id
-        )))?
-        .into();
+    if model.is_none() {
+        // 统一返回 AppError::NotFound，保证响应格式一致
+        return Err(AppError::NotFound(format!("用户ID {user_id} 不存在")));
+    }
+    let user: users::ActiveModel = model.unwrap().into();
 
     let delete_result = user.delete(&app_data.db).await?;
     println!("删除结果: {:?}", delete_result);
