@@ -18,14 +18,18 @@ tls_key_path = "./key.pem"
 
 # 数据库配置
 [db]
-# 数据库类型 (目前仅支持 sqlite)
-db_type = "sqlite"
-# 数据库路径
-path = "./data/db.sqlite"
+# 数据库 (目前仅支持 sqlite)
+url = "sqlite://./data/db.sqlite?mode=rwc"
 # 最大连接数
 max_connections = 100
 # 最小连接数
 min_connections = 3
+
+# redis 配置
+[redis]
+# Redis 服务器地址
+# 配置格式参考: https://docs.rs/redis/latest/redis/#connection-parameters
+url = "redis://192.168.64.4:6379"
 
 # logger 配置
 [logger]

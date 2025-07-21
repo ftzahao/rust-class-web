@@ -87,6 +87,9 @@ impl Default for Server {
 }
 
 impl Server {
+    pub fn addr(&self) -> (std::net::IpAddr, u16) {
+        (self.host, self.port)
+    }
     /// 获取 OpenSSL 的 SslAcceptorBuilder
     pub fn openssl_builder(&self) -> SslAcceptorBuilder {
         // load TLS keys
@@ -131,7 +134,6 @@ impl Server {
     /// 打印服务器启动的地址
     pub fn print_server_startup_address(&self) {
         let use_tls = self.enabled_tls.use_tls();
-        println!("{use_tls}");
         let scheme = if use_tls { "https" } else { "http" };
         let ip = utils::local_ip();
         let mut tips = Vec::new();

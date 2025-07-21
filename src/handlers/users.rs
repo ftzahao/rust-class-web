@@ -32,7 +32,7 @@ pub async fn get_query_users(
     // 使用 sea-orm 进行查询
     let user_list = users::Entity::find()
         .filter(crate::entity::users::Column::Name.contains(&info.name))
-        .all(&app_data.db)
+        .all(&app_data.db_pool)
         .await?;
 
     println!("{:#?}", user_list);
@@ -58,7 +58,15 @@ pub async fn create_user(
     println!("{:#?}", params);
     // 参数验证
     if let Err(e) = params.validate() {
-        return Err(AppError::ValidationError(format!("{e}")));
+        // 提取所有错误消息，只保留自定义内容
+        let msg = e
+            .field_errors()
+            .values()
+            .flat_map(|errs| errs.iter().filter_map(|err| err.message.as_ref()))
+            .map(|msg| msg.to_string())
+            .collect::<Vec<_>>()
+            .join(", ");
+        return Err(AppError::ValidationError(msg));
     }
 
     let argon2_config = argon2::Config::default();
@@ -77,7 +85,7 @@ pub async fn create_user(
         update_time: Set(Utc::now().naive_utc()),
     };
 
-    let insert_result = user.insert(&app_data.db).await?;
+    let insert_result = user.insert(&app_data.db_pool).await?;
     println!("插入结果: {:?}", insert_result);
 
     Ok(HttpResponse::Ok().json(PostReqJson {
@@ -101,19 +109,21 @@ pub async fn delete_user(
     // 先删除该用户下的所有设备
     let device_delete_result: DeleteResult = devices::Entity::delete_many()
         .filter(crate::entity::devices::Column::UserId.eq(user_id))
-        .exec(&app_data.db)
+        .exec(&app_data.db_pool)
         .await?;
     println!("删除设备结果: {:?}", device_delete_result);
 
     // 使用 sea-orm 删除用户
-    let model = users::Entity::find_by_id(user_id).one(&app_data.db).await?;
+    let model = users::Entity::find_by_id(user_id)
+        .one(&app_data.db_pool)
+        .await?;
     if model.is_none() {
         // 统一返回 AppError::NotFound，保证响应格式一致
         return Err(AppError::NotFound(format!("用户ID {user_id} 不存在")));
     }
     let user: users::ActiveModel = model.unwrap().into();
 
-    let delete_result = user.delete(&app_data.db).await?;
+    let delete_result = user.delete(&app_data.db_pool).await?;
     println!("删除结果: {:?}", delete_result);
     Ok(HttpResponse::Ok().json(PostReqJson {
         code: 200,
@@ -142,7 +152,7 @@ pub async fn login(
 ) -> Result<HttpResponse, AppError> {
     let user_opt = users::Entity::find()
         .filter(users::Column::Email.eq(&data.email))
-        .one(&app_data.db)
+        .one(&app_data.db_pool)
         .await?;
 
     if let Some(user) = user_opt {
@@ -156,7 +166,7 @@ pub async fn login(
                 token: Set(token.clone()),
                 ..Default::default()
             };
-            if let Err(e) = device.insert(&app_data.db).await {
+            if let Err(e) = device.insert(&app_data.db_pool).await {
                 return Err(AppError::InternalError(format!("设备写入失败: {}", e)));
             }
             return Ok(HttpResponse::Ok().json(LoginResp {
@@ -200,7 +210,7 @@ pub async fn logout(
             query = query.filter(devices::Column::Token.eq(token));
         }
     }
-    let _ = query.exec(&app_data.db).await;
+    let _ = query.exec(&app_data.db_pool).await;
 
     Ok(HttpResponse::Ok().json(LoginResp {
         code: 200,

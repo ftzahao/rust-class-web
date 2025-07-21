@@ -40,10 +40,8 @@
 
     # 数据库配置
     [db]
-    # 数据库类型 (目前仅支持 sqlite)
-    db_type = "sqlite"
-    # 数据库路径
-    path = "./data/db.sqlite"
+    # 数据库 (目前仅支持 sqlite)
+    url = "sqlite://./data/db.sqlite?mode=rwc"
     # 最大连接数
     max_connections = 100
     # 最小连接数

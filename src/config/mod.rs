@@ -1,9 +1,11 @@
 pub mod db;
 pub mod logger;
+pub mod redis;
 pub mod server;
 
 use db::Db;
 use logger::Logger;
+use redis::Redis;
 use server::Server;
 
 use figment::{
@@ -20,6 +22,8 @@ pub struct Config {
     pub db: Db,
     /// 日志配置
     pub logger: Logger,
+    /// Redis 配置
+    pub redis: Redis,
 }
 
 impl Config {
@@ -27,13 +31,11 @@ impl Config {
     pub fn new() -> Self {
         println!("加载配置文件 config.toml");
         let config: Config = Figment::new()
-            // 先加载结构体默认值
             .merge(Serialized::defaults(Config::default()))
-            // 再加载 config.toml，文件中有的字段会覆盖默认值
             .merge(Toml::file("config.toml"))
             .extract()
             .expect("配置加载失败");
-        println!("配置加载完成: {:#?}", config);
+        println!("配置加载完成");
         config
     }
 }

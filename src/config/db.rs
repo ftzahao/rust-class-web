@@ -1,12 +1,11 @@
+use sea_orm::{ConnectOptions, ConnectionTrait, Database, DatabaseConnection};
+
 /// 数据库配置
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(default)]
 pub struct Db {
-    /// 数据库类型
-    /// - "sqlite": SQLite 数据库
-    pub db_type: String,
     /// 数据库路径
-    pub path: String,
+    pub url: String,
     /// 最大连接数
     pub max_connections: u32,
     /// 最小连接数
@@ -15,8 +14,7 @@ pub struct Db {
 impl Default for Db {
     fn default() -> Self {
         Db {
-            db_type: "sqlite".to_string(),
-            path: "./data/db.sqlite".to_string(),
+            url: "sqlite://./data/db.sqlite?mode=rwc".to_string(),
             max_connections: 100,
             min_connections: 3,
         }
@@ -24,24 +22,14 @@ impl Default for Db {
 }
 
 impl Db {
-    /// 获取数据库连接 URL
-    pub fn database_url(&self) -> String {
-        format!("{}://{}?mode=rwc", self.db_type, self.path)
-    }
-}
-
-use crate::config::Config;
-use sea_orm::{ConnectOptions, ConnectionTrait, Database, DatabaseConnection};
-
-impl Config {
     /// 初始化数据库连接池
-    pub async fn init_db(config: &Config) -> DatabaseConnection {
-        let url = Db::database_url(&config.db);
-        println!("正在连接数据库: {}", &config.db.path);
+    pub async fn init_db(&self) -> DatabaseConnection {
+        let url = &self.url;
+        println!("正在连接数据库: {}", url);
 
         let mut opt = ConnectOptions::new(url);
-        opt.max_connections(config.db.max_connections)
-            .min_connections(config.db.min_connections)
+        opt.max_connections(self.max_connections)
+            .min_connections(self.min_connections)
             .sqlx_logging(true);
         let db = Database::connect(opt).await.unwrap();
         create_db_table(db.clone()).await; // 确保数据库表存在

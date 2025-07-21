@@ -1,6 +1,26 @@
+use crate::config::Config;
+use anyhow::Result;
+use redis::Client;
+use std::sync::Arc;
+
 #[derive(Debug, Clone)]
 pub struct AppState {
-    pub db: sea_orm::DatabaseConnection,
+    pub config: Config,
+    pub db_pool: sea_orm::DatabaseConnection,
+    pub redis_client: Arc<Client>,
+}
+
+impl AppState {
+    pub async fn new() -> Result<Self> {
+        let config = Config::new();
+        let db_pool = config.db.init_db().await;
+        let redis_client = config.redis.client().await?;
+        Ok(Self {
+            config,
+            db_pool,
+            redis_client: Arc::new(redis_client),
+        })
+    }
 }
 
 /// `Cargo.toml` 中的 package.name

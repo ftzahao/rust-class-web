@@ -1,4 +1,3 @@
-use crate::config::Config;
 use anyhow::Result;
 use time::{
     UtcOffset,
@@ -102,51 +101,29 @@ impl Logger {
             _ => tracing::Level::INFO,
         }
     }
-}
-
-impl Config {
     pub async fn tracing_init(&self) -> Result<()> {
         println!("日志记录器正在初始化...");
-        let logger = &self.logger;
-        let Logger {
-            make_writer,
-            directory: _,
-            filename_prefix: _,
-            filename_suffix: _,
-            max_level: _,
-            max_log_files: _,
-            enable_json_formatter: _,
-            rotation: _,
-            show_target,
-            show_thread_ids,
-            show_thread_names,
-            show_file_paths,
-            show_line_number,
-            show_level,
-            show_ansi,
-        } = logger;
         let builder = tracing_subscriber::fmt()
-            .with_ansi(*show_ansi)
-            .with_thread_ids(*show_thread_ids)
-            .with_thread_names(*show_thread_names)
-            .with_file(*show_file_paths)
-            .with_line_number(*show_line_number)
-            .with_level(*show_level)
-            .with_target(*show_target)
+            .with_writer(match self.make_writer.to_uppercase().as_str() == "FILE" {
+                true => BoxMakeWriter::new(Logger::file_appender(self)),
+                false => BoxMakeWriter::new(std::io::stdout),
+            })
+            .with_ansi(self.show_ansi)
+            .with_thread_ids(self.show_thread_ids)
+            .with_thread_names(self.show_thread_names)
+            .with_file(self.show_file_paths)
+            .with_line_number(self.show_line_number)
+            .with_level(self.show_level)
+            .with_target(self.show_target)
             .with_timer(Logger::message_time_stamp())
-            .with_max_level(Logger::max_level(logger));
-        let builder = if make_writer.to_uppercase().as_str() == "FILE" {
-            builder.with_writer(BoxMakeWriter::new(Logger::file_appender(logger)))
-        } else {
-            builder.with_writer(BoxMakeWriter::new(std::io::stdout))
-        };
+            .with_max_level(Logger::max_level(self));
         // 新增：根据 enable_json_formatter 输出 JSON 格式
-        if logger.enable_json_formatter {
+        if self.enable_json_formatter {
             builder.json().init();
         } else {
             builder.init();
         }
-
+        println!("日志记录器初始化完成");
         Ok(())
     }
 }
