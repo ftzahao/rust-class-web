@@ -9,11 +9,11 @@ extern crate tracing;
 #[macro_use]
 extern crate validator;
 
-pub mod config;
+pub mod app_config;
 pub mod entity;
 pub mod errors;
 pub mod handlers;
-pub mod middleware;
+pub mod mw;
 pub mod models;
 pub mod state;
 pub mod utils;

@@ -6,7 +6,7 @@
 - 部署：
 
   - 打包: 先执行 `cargo clean` 在 `cargo build`
-  - 把 `target/release/rust-class-web` 和 `config.toml` 以及依赖的文件放到同一目录下，然后进入该目录
+  - 把 `target/release/rust-class-web` 和 `config/app.toml` 以及依赖的文件放到同一目录下，然后进入该目录
   - 查询 PID: `lsof -i:8001`
   - 假设查询到的 PID 为 79291，停止进程: `kill -9 79291`
   - 如果无权限: `chmod 777 rust-class-web`
@@ -15,24 +15,19 @@
 
 - 配置相关：
 
-  - 需要同目录下创建 `config.toml` 文件
+  - 需要同目录下创建 `config/app.toml` 文件
 
-    以下为 `config.toml` 文件内容默认值，所有配置均可以删除或注释
+    以下为 `config/app.toml` 文件内容默认值，所有配置均可以删除或注释
 
     ```toml
     # 服务器启动配置
     [server]
     # 服务器主机地址
-    # - "0.0.0.0", "127.0.0.1", "localhost" => 表示监听所有地址
-    # - server.enabled_tls 等于 "rustls-0_23" 或 "openssl" 时，必须使用网络地址访问
-    host = "0.0.0.0"
+    host = "127.0.0.1"
     # 服务器端口
     port = 8001
     # 启用的 TLS 版本
-    # - "default": 不启用 TLS
-    # - true | "rustls-0_23": 使用 Rustls 0.23
-    # - "openssl": 使用 OpenSSL
-    enabled_tls = false
+    enabled_tls = true
     # 证书文件路径
     tls_cert_path = "./cert.pem"
     # 密钥文件路径
@@ -46,6 +41,12 @@
     max_connections = 100
     # 最小连接数
     min_connections = 3
+
+    # redis 配置
+    [redis]
+    # Redis 服务器地址
+    # 配置格式参考: https://docs.rs/redis/latest/redis/#connection-parameters
+    url = "redis://192.168.64.4:6379"
 
     # logger 配置
     [logger]
@@ -66,7 +67,7 @@
     # - "info" | "INFO" 信息级别（3级）
     # - "debug" | "DEBUG" 调试级别（4级）
     # - "trace" | "TRACE" 跟踪级别（5级）
-    max_level = "info"
+    max_level = "debug"
     # 日志文件的滚动策略
     # - "minutely" | "MINUTELY" 每分钟滚动
     # - "hourly" | "HOURLY" 每小时滚动
@@ -77,9 +78,9 @@
     # 当达到最大日志文件数时，最旧的日志文件将被删除
     max_log_files = 30
     # 是否启用 JSON 格式的日志输出
-    enable_json_formatter = false
+    enable_json_formatter = true
     # 是否显示事件的目标
-    show_target = false
+    show_target = true
     # 是否显示线程 ID
     show_thread_ids = true
     # 是否显示线程名称

@@ -1,16 +1,11 @@
 # 服务器启动配置
 [server]
 # 服务器主机地址
-# - "0.0.0.0", "127.0.0.1", "localhost" => 表示监听所有地址
-# - server.enabled_tls 等于 "rustls-0_23" 或 "openssl" 时，必须使用网络地址访问
-host = "0.0.0.0"
+host = "127.0.0.1"
 # 服务器端口
 port = 8001
 # 启用的 TLS 版本
-# - false: 不启用 TLS
-# - true | "rustls-0_23": 使用 Rustls 0.23
-# - "openssl": 使用 OpenSSL
-enabled_tls = false
+enabled_tls = true
 # 证书文件路径
 tls_cert_path = "./cert.pem"
 # 密钥文件路径

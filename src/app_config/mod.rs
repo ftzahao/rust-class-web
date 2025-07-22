@@ -8,11 +8,6 @@ use logger::Logger;
 use redis::Redis;
 use server::Server;
 
-use figment::{
-    Figment,
-    providers::{Format, Serialized, Toml},
-};
-
 #[derive(Serialize, Deserialize, Clone, Default, Debug)]
 #[serde(default)]
 pub struct Config {
@@ -29,13 +24,14 @@ pub struct Config {
 impl Config {
     /// 创建一个新的配置实例
     pub fn new() -> Self {
-        println!("加载配置文件 config.toml");
-        let config: Config = Figment::new()
-            .merge(Serialized::defaults(Config::default()))
-            .merge(Toml::file("config.toml"))
-            .extract()
-            .expect("配置加载失败");
-        println!("配置加载完成");
+        println!("加载配置文件 config/app.toml");
+        let config: Config = ::config::Config::builder()
+            .add_source(::config::File::with_name("config/app.toml"))
+            .build()
+            .unwrap()
+            .try_deserialize::<Config>()
+            .unwrap();
+        println!("配置加载完成{:#?}", config);
         config
     }
 }

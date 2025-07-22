@@ -20,6 +20,7 @@ impl Redis {
     /// 访问 Redis 服务器
     pub async fn client(&self) -> Result<Client, RedisError> {
         let client = Client::open(self.url.clone())?;
+        // let conn = client.get_connection_manager().await?;
         Ok(client)
     }
 }
