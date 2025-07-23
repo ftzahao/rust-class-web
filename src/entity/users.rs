@@ -1,3 +1,4 @@
+use crate::utils::serde_timestamp;
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
 
@@ -13,8 +14,10 @@ pub struct Model {
     pub email: String,
     pub pass_word: String,
     pub status: String,
-    pub create_time: DateTime,
-    pub update_time: DateTime,
+    #[serde(with = "serde_timestamp")]
+    pub create_time: chrono::NaiveDateTime,
+    #[serde(with = "serde_timestamp")]
+    pub update_time: chrono::NaiveDateTime,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
