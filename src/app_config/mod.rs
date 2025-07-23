@@ -31,7 +31,7 @@ impl Config {
             .unwrap()
             .try_deserialize::<Config>()
             .unwrap();
-        println!("配置加载完成{:#?}", config);
+        println!("配置加载完成 -> {:#?}", config);
         config
     }
 }

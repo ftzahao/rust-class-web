@@ -48,5 +48,4 @@ tracing-subscriber = { version = "0.3.19", features = [
 ] }
 tracing-appender = "0.2.3"
 jsonwebtoken = "9.3.1"
-local-ip-address = "0.6.5"
 config = "0.15.13"

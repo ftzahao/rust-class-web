@@ -3,8 +3,6 @@ use rustls::{
     pki_types::{CertificateDer, PrivateKeyDer, pem::PemObject},
 };
 
-use crate::utils;
-
 /// 服务器启动配置
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(default)]
@@ -33,8 +31,8 @@ impl Default for Server {
 }
 
 impl Server {
-    pub fn addr(&self) -> String {
-        format!("{}:{}", self.host, self.port)
+    pub fn addr(&self) -> (std::net::IpAddr, u16) {
+        (self.host, self.port)
     }
     pub fn rustls_config(&self) -> ServerConfig {
         rustls::crypto::aws_lc_rs::default_provider()
@@ -55,27 +53,5 @@ impl Server {
             .with_no_client_auth()
             .with_single_cert(cert_chain, key_der)
             .unwrap()
-    }
-    /// 打印服务器启动的地址
-    pub fn print_server_startup_address(&self) {
-        let use_tls = self.enabled_tls;
-        println!("{use_tls} TLS enabled");
-        let scheme = if use_tls { "https" } else { "http" };
-        let ip = utils::local_ip();
-        let mut tips = Vec::new();
-
-        if use_tls {
-            tips.push(format!("➜ Network: {scheme}://{ip}"));
-        } else {
-            tips.push(format!("➜ Local:   {scheme}://localhost"));
-            tips.push(format!("➜ Local:   {scheme}://127.0.0.1"));
-            if ip != "127.0.0.1" && use_tls {
-                tips.push(format!("➜ Network: {scheme}://{ip}"));
-            }
-        }
-
-        for tip in tips {
-            println!("{tip}:{}", self.port);
-        }
     }
 }
