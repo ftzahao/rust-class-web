@@ -1,4 +1,5 @@
 use crate::utils::serde_timestamp;
+use chrono::{DateTime, Utc};
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
 
@@ -11,9 +12,9 @@ pub struct Model {
     pub user_id: i64,
     pub token: String,
     #[serde(with = "serde_timestamp")]
-    pub create_time: chrono::NaiveDateTime,
+    pub create_time: DateTime<Utc>,
     #[serde(with = "serde_timestamp")]
-    pub update_time: chrono::NaiveDateTime,
+    pub update_time: DateTime<Utc>,
     #[sea_orm(nullable)]
     pub name: Option<String>,
 }

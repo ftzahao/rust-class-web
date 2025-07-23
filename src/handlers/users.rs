@@ -81,8 +81,8 @@ pub async fn create_user(
         email: Set(params.email.to_string()),
         pass_word: Set(hashed_password),
         status: Set("normal".to_string()),
-        create_time: Set(Utc::now().naive_utc()),
-        update_time: Set(Utc::now().naive_utc()),
+        create_time: Set(Utc::now()),
+        update_time: Set(Utc::now()),
     };
 
     let insert_result = user.insert(&app_data.db_pool).await?;
