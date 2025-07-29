@@ -1,6 +1,7 @@
 use crate::entity::{devices, users};
 use crate::errors::AppError;
 use crate::state::AppState;
+use crate::utils::extract_path_param;
 use actix_web::{HttpResponse, Result, web};
 use sea_orm::{ActiveModelTrait, ColumnTrait, DeleteResult, EntityTrait, QueryFilter};
 
@@ -11,31 +12,40 @@ pub struct PostReqJson<T> {
     message: &'static str,
 }
 
-#[delete("/users/delete/{id}")]
-pub async fn delete_user(
-    id: Result<web::Path<i64>>,
-    app_data: web::Data<AppState>,
-) -> Result<HttpResponse, AppError> {
-    let user_id = match id {
-        Ok(path) => path.into_inner(),
-        Err(err) => return Err(AppError::BadRequest(format!("无效的用户ID: {err}"))),
-    };
-    // 先删除该用户下的所有设备
-    let device_delete_result: DeleteResult = devices::Entity::delete_many()
-        .filter(crate::entity::devices::Column::UserId.eq(user_id))
-        .exec(&app_data.db_pool)
-        .await?;
-    println!("删除设备结果: {:?}", device_delete_result);
-
-    // 使用 sea-orm 删除用户
-    let model = users::Entity::find_by_id(user_id)
-        .one(&app_data.db_pool)
-        .await?;
+async fn find_user_active_model(
+    user_id: i64,
+    db_pool: &sea_orm::DatabaseConnection,
+) -> Result<users::ActiveModel, AppError> {
+    let model = users::Entity::find_by_id(user_id).one(db_pool).await?;
     if model.is_none() {
-        // 统一返回 AppError::NotFound，保证响应格式一致
         return Err(AppError::NotFound(format!("用户ID {user_id} 不存在")));
     }
-    let user: users::ActiveModel = model.unwrap().into();
+    Ok(model.unwrap().into())
+}
+
+async fn delete_user_devices(
+    user_id: i64,
+    db_pool: &sea_orm::DatabaseConnection,
+) -> Result<DeleteResult, AppError> {
+    let device_delete_result = devices::Entity::delete_many()
+        .filter(crate::entity::devices::Column::UserId.eq(user_id))
+        .exec(db_pool)
+        .await?;
+    println!("删除设备结果: {:?}", device_delete_result);
+    Ok(device_delete_result)
+}
+
+#[delete("/users/delete/{id}")]
+pub async fn delete_user(
+    id: Result<web::Path<String>>,
+    app_data: web::Data<AppState>,
+) -> Result<HttpResponse, AppError> {
+    let user_id = extract_path_param(id, "无效的用户ID")?.parse::<i64>()?;
+    // 使用通用函数删除该用户下的所有设备
+    delete_user_devices(user_id, &app_data.db_pool).await?;
+
+    // 使用通用函数查找用户 ActiveModel
+    let user = find_user_active_model(user_id, &app_data.db_pool).await?;
 
     let delete_result = user.delete(&app_data.db_pool).await?;
     println!("删除结果: {:?}", delete_result);

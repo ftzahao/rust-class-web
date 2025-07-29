@@ -1,3 +1,5 @@
+use crate::errors::AppError;
+use actix_web::{Result, web};
 pub mod redis;
 
 /// 提供用于序列化和反序列化 `chrono::NaiveDateTime` 的字段属性的工具
@@ -22,5 +24,13 @@ pub mod serde_timestamp {
         let s = String::deserialize(deserializer)?;
         let dt = NaiveDateTime::parse_from_str(&s, FORMAT).map_err(serde::de::Error::custom)?;
         Ok(DateTime::<Utc>::from_naive_utc_and_offset(dt, Utc))
+    }
+}
+
+// 提取路径参数
+pub fn extract_path_param<T>(param: Result<web::Path<T>>, param_name: &str) -> Result<T, AppError> {
+    match param {
+        Ok(path) => Ok(path.into_inner()),
+        Err(_) => Err(AppError::BadRequest(format!("无效的{param_name}"))),
     }
 }
