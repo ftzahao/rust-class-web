@@ -13,15 +13,13 @@ pub struct PostReqJson<T> {
 
 #[delete("/users/delete/{id}")]
 pub async fn delete_user(
-    id: web::Path<String>,
+    id: Result<web::Path<i64>>,
     app_data: web::Data<AppState>,
 ) -> Result<HttpResponse, AppError> {
-    let id_str = id.into_inner();
-    let user_id: i64 = id_str
-        .parse()
-        .map_err(|_| AppError::ParseError(format!("无法解析用户ID: {id_str}")))?;
-    println!("删除用户 ID: {}", user_id);
-
+    let user_id = match id {
+        Ok(path) => path.into_inner(),
+        Err(err) => return Err(AppError::BadRequest(format!("无效的用户ID: {err}"))),
+    };
     // 先删除该用户下的所有设备
     let device_delete_result: DeleteResult = devices::Entity::delete_many()
         .filter(crate::entity::devices::Column::UserId.eq(user_id))
