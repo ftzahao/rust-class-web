@@ -37,6 +37,7 @@ pub enum AppError {
 struct ErrorResponse {
     code: i32,
     message: String,
+    data: (),
 }
 
 impl fmt::Display for AppError {
@@ -77,7 +78,11 @@ impl ResponseError for AppError {
         let status = self.status_code();
         let message = self.to_string();
         let code = status.as_u16() as i32;
-        HttpResponse::build(status).json(ErrorResponse { code, message })
+        HttpResponse::build(status).json(ErrorResponse {
+            code,
+            message,
+            data: (),
+        })
     }
 }
 

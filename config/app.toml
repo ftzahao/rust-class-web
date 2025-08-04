@@ -1,7 +1,7 @@
 # 服务器启动配置
 [server]
 # 服务器主机地址
-host = "127.0.0.1"
+host = "0.0.0.0"
 # 服务器端口
 port = 8001
 # 启用的 TLS 版本
@@ -20,11 +20,11 @@ max_connections = 100
 # 最小连接数
 min_connections = 3
 
-# redis 配置
-[redis]
-# Redis 服务器地址
-# 配置格式参考: https://docs.rs/redis/latest/redis/#connection-parameters
-url = "redis://192.168.64.4:6379"
+# mongodb 配置
+[mongodb]
+# MongoDB 服务器地址
+# 连接例子: mongodb://<username>:<password>@<hostname>:<port>/?tls=true&tlsCertificateKeyFile=cert.pem&tlsCAFile=ca.pem
+url = "mongodb://192.168.64.2:27017"
 
 # logger 配置
 [logger]

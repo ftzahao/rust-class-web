@@ -1,11 +1,11 @@
 pub mod db;
 pub mod logger;
-pub mod redis;
+pub mod mongodb;
 pub mod server;
 
 use db::Db;
 use logger::Logger;
-use redis::Redis;
+use mongodb::Mongodb;
 use server::Server;
 
 #[derive(Serialize, Deserialize, Clone, Default, Debug)]
@@ -17,8 +17,8 @@ pub struct Config {
     pub db: Db,
     /// 日志配置
     pub logger: Logger,
-    /// Redis 配置
-    pub redis: Redis,
+    /// MongoDB 配置
+    pub mongodb: Mongodb,
 }
 
 impl Config {

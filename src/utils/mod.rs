@@ -1,6 +1,5 @@
 use crate::errors::AppError;
 use actix_web::{Result, web};
-pub mod redis;
 
 /// 提供用于序列化和反序列化 `chrono::NaiveDateTime` 的字段属性的工具
 pub mod serde_timestamp {

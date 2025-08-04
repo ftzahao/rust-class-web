@@ -1,20 +1,19 @@
 use anyhow::Result;
-use redis::Client;
-use std::sync::Arc;
+use mongodb::Client;
 
 #[derive(Debug, Clone)]
 pub struct AppState {
     pub db_pool: sea_orm::DatabaseConnection,
-    pub redis_client: Arc<Client>,
+    pub mongodb_client: Client,
 }
 
 impl AppState {
     pub async fn new(app_config: &crate::app_config::Config) -> Result<Self> {
         let db_pool = app_config.db.init_db().await;
-        let redis_client = app_config.redis.client().await?;
+        let mongodb_client = app_config.mongodb.client().await?;
         Ok(Self {
             db_pool,
-            redis_client: Arc::new(redis_client),
+            mongodb_client,
         })
     }
 }

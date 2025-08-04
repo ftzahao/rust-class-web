@@ -1,6 +1,6 @@
 [package]
 name = "rust-class-web"
-version = "0.2.8"
+version = "0.3.0"
 edition = "2024"
 authors = ["ftzahao <ftzahao@outlook.com>"]
 
@@ -9,14 +9,7 @@ actix-web = { version = "4.11.0", features = ["rustls-0_23"] }
 actix-files = "0.6.6"
 actix-multipart = "0.7.2"
 actix-cors = "0.7.1"
-rustls = "0.23.30"
-
-redis = { version = "0.32.4", features = [
-    "aio",
-    "tokio-comp",
-    "connection-manager",
-] }
-redis-macros = "0.5.6"
+rustls = "0.23.31"
 sea-orm = { version = "1.1.14", features = [
     "sqlx-sqlite",
     "runtime-tokio-rustls",
@@ -24,8 +17,8 @@ sea-orm = { version = "1.1.14", features = [
     "debug-print",
 ] }
 serde = { version = "1.0.219", features = ["derive"] }
-serde_json = "1.0.141"
-tokio = { version = "1.47.0", features = ["full"] }
+serde_json = "1.0.142"
+tokio = { version = "1.47.1", features = ["full"] }
 uuid = { version = "1.17.0", features = ["serde", "v4"] }
 chrono = { version = "0.4.41", features = ["serde"] }
 bigdecimal = "0.4.8"
@@ -35,7 +28,6 @@ rust-argon2 = "3.0.0"
 actix-web-validator = "6.0.0"
 validator = { version = "0.20.0", features = ["derive"] }
 anyhow = "1.0.98"
-
 log = "0.4.27"
 time = { version = "0.3.41", features = ["local-offset"] }
 tracing = "0.1.41"
@@ -49,3 +41,4 @@ tracing-subscriber = { version = "0.3.19", features = [
 tracing-appender = "0.2.3"
 jsonwebtoken = "9.3.1"
 config = "0.15.13"
+mongodb = { version = "3.2.4", features = ["rustls-tls", "sync", "zstd-compression"] }
