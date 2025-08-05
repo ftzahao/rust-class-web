@@ -1,4 +1,8 @@
-use mongodb::{Client, bson::doc};
+use mongodb::{
+    Client,
+    bson::doc,
+    options::{ClientOptions, ServerApi, ServerApiVersion},
+};
 
 /// MongoDB 配置
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -18,14 +22,16 @@ impl Default for Mongodb {
 impl Mongodb {
     /// 访问 MongoDB 服务器
     pub async fn client(&self) -> Result<Client, mongodb::error::Error> {
-        let client = Client::with_uri_str(self.url.clone()).await?;
-        // 使用 ping 命令检测连接
+        let url = &self.url;
+        let mut client_options = ClientOptions::parse(url).await?;
+        let server_api = ServerApi::builder().version(ServerApiVersion::V1).build();
+        client_options.server_api = Some(server_api);
+        let client = Client::with_options(client_options)?;
         client
             .database("admin")
-            .run_command(doc! {"ping": 1})
+            .run_command(doc! { "ping": 1 })
             .await?;
-
-        println!("Successfully connected to MongoDB at {}", self.url);
+        println!("MongoDB 连接成功: {url}");
         Ok(client)
     }
 }

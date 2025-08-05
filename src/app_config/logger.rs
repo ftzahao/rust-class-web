@@ -102,7 +102,6 @@ impl Logger {
         }
     }
     pub async fn tracing_init(&self) -> Result<()> {
-        println!("日志记录器正在初始化...");
         let builder = tracing_subscriber::fmt()
             .with_writer(match self.make_writer.to_uppercase().as_str() == "FILE" {
                 true => BoxMakeWriter::new(Logger::file_appender(self)),

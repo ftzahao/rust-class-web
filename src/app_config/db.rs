@@ -23,22 +23,20 @@ impl Default for Db {
 
 impl Db {
     /// 初始化数据库连接池
-    pub async fn init_db(&self) -> DatabaseConnection {
+    pub async fn init_db(&self) -> Result<DatabaseConnection, sea_orm::DbErr> {
         let url = &self.url;
-        println!("正在连接数据库: {}", url);
-
         let mut opt = ConnectOptions::new(url);
         opt.max_connections(self.max_connections)
             .min_connections(self.min_connections)
             .sqlx_logging(true);
-        let db = Database::connect(opt).await.unwrap();
-        create_db_table(db.clone()).await; // 确保数据库表存在
-        println!("数据库连接成功");
-        db
+        let db = Database::connect(opt).await?;
+        create_db_table(db.clone()).await?; // 确保数据库表存在
+        println!("数据库连接成功: {}", url);
+        Ok(db)
     }
 }
 /// 检查数据库的完整性，不完整的部分给予补充
-async fn create_db_table(pool: DatabaseConnection) {
+async fn create_db_table(pool: DatabaseConnection) -> Result<(), sea_orm::DbErr> {
     // 新增用户表
     pool.execute_unprepared("CREATE TABLE IF NOT EXISTS users(
         id          INTEGER primary key AUTOINCREMENT not null,
@@ -60,4 +58,5 @@ async fn create_db_table(pool: DatabaseConnection) {
         name        text                              null,           -- 设备名称
         FOREIGN KEY(user_id) REFERENCES users(id)
     )").await.unwrap();
+    Ok(())
 }

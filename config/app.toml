@@ -23,7 +23,7 @@ min_connections = 3
 # mongodb 配置
 [mongodb]
 # MongoDB 服务器地址
-# 连接例子: mongodb://<username>:<password>@<hostname>:<port>/?tls=true&tlsCertificateKeyFile=cert.pem&tlsCAFile=ca.pem
+# 标准连接字符串格式: https://www.mongodb.com/zh-cn/docs/manual/reference/connection-string/#std-label-connections-standard-connection-string-format
 url = "mongodb://192.168.64.2:27017"
 
 # logger 配置

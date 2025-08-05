@@ -40,11 +40,12 @@ async fn main() -> std::io::Result<()> {
     if app_config.server.enabled_tls {
         let tls = app_config.server.rustls_config();
         http_server = http_server.bind_rustls_0_23(addr, tls)?;
+        println!("{CARGO_PKG_NAME} v{CARGO_PKG_VERSION} 服务启动成功！");
         println!("➜ Network: https://127.0.0.1:{}", addr.1);
     } else {
         http_server = http_server.bind(addr)?;
+        println!("{CARGO_PKG_NAME} v{CARGO_PKG_VERSION} 服务启动成功！");
         println!("➜ Local:   http://127.0.0.1:{}", addr.1);
     }
-    println!("{CARGO_PKG_NAME} v{CARGO_PKG_VERSION} 服务启动成功！");
     http_server.run().await
 }

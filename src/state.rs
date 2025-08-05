@@ -9,7 +9,7 @@ pub struct AppState {
 
 impl AppState {
     pub async fn new(app_config: &crate::app_config::Config) -> Result<Self> {
-        let db_pool = app_config.db.init_db().await;
+        let db_pool = app_config.db.init_db().await?;
         let mongodb_client = app_config.mongodb.client().await?;
         Ok(Self {
             db_pool,
